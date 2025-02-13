@@ -1,6 +1,9 @@
 <?php 
 include __DIR__ . "/../partials/header.php";
 include __DIR__ . "/../partials/nav.php"; 
+require_once(__DIR__ . '/../rabbitmq/path.inc');
+require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
+require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 ?>
 
 <form action="register.php" method="POST">
@@ -32,7 +35,7 @@ include __DIR__ . "/../partials/nav.php";
     if (isset($_POST["password"]) && isset($_POST["confirm"]) && isset($_POST["user"]) && isset($_POST["email"])) {
         $password = $_POST["password"];
         $confirm = $_POST["confirm"];
-        $username = $_POST["username"];
+        $user = $_POST["user"];
         $email = $_POST["email"];
         $hasErrors = false;
 
@@ -42,10 +45,30 @@ include __DIR__ . "/../partials/nav.php";
         }
     
         if(!$hasErrors) {
-            echo "<script type='text/javascript'>alert('Success!');</script>";
-        }        
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+            try {
+                $request = array();
+                $request['type'] = 'registration';
+                $request['user'] = $user;
+                $request['password'] = $hash;
+                $request['email'] = $email;
+                var_dump($request);
+                $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+                $response = $client->send_request($request);
+                print_r($response);
+                //if(isset($response['type']) && $response['type'] === 'registration_response') {
+                //    if($response['registration_status'] === 'success') {
+                //        echo "<script type='text/javascript'>alert('Registration Success!');</script>";
+                //    } else {
+                //        echo "<script type='text/javascript'>alert('Fuck you');</script>";
+                //    } 
+                //}
+            }
+            catch (Exception $e) {
+                echo $e;
+            }        
+        }
     }
-
 ?>
 
 <?php include __DIR__ . "/../partials/footer.php"; ?>

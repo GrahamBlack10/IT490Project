@@ -30,10 +30,9 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
         $request['user'] = $user;
         $request['password'] = $password;
         $request['session_id'] = session_id();
-        var_dump($request);
         $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
         $response = $client->send_request($request);
-        var_dump($response);
+        print_r($response);
     }
 
 ?>

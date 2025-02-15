@@ -52,7 +52,6 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
                 $request['user'] = $user;
                 $request['password'] = $hash;
                 $request['email'] = $email;
-                var_dump($request);
                 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
                 $response = $client->send_request($request);
                 print_r($response);

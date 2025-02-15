@@ -56,6 +56,13 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
                 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
                 $response = $client->send_request($request);
                 print_r($response);
+                if($response === 'success') {
+                    "<script type='text/javascript'>alert('Resgistration successful!');</script>";
+                }
+
+                else {
+                    "<script type='text/javascript'>alert('Resgistration failed...');</script>";
+                }
                 //if(isset($response['type']) && $response['type'] === 'registration_response') {
                 //    if($response['registration_status'] === 'success') {
                 //        echo "<script type='text/javascript'>alert('Registration Success!');</script>";

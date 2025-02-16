@@ -1,9 +1,15 @@
 <?php 
 include __DIR__ . "/../partials/header.php";
 include __DIR__ . "/../partials/nav.php"; 
+include __DIR__ . "/../lib/functions.php";
 require_once(__DIR__ . '/../rabbitmq/path.inc');
 require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
 require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
+
+if (is_logged_in()) {
+    die(header("Location: profile.php"));
+}
+
 ?>
 
 <form action="login.php" method="POST">
@@ -30,10 +36,16 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
         $request['user'] = $user;
         $request['password'] = $password;
         $request['session_id'] = session_id();
-        var_dump($request);
         $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
         $response = $client->send_request($request);
-        var_dump($response);
+        if ($response === 'success') {
+            echo $response . 'Login successful!';
+            die(header("Location: profile.php"));
+        }
+
+        else {
+            echo $response . 'Login failed, please try again';
+        }
     }
 
 ?>

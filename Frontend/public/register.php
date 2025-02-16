@@ -1,9 +1,14 @@
 <?php 
 include __DIR__ . "/../partials/header.php";
 include __DIR__ . "/../partials/nav.php"; 
+include __DIR__ . "/../lib/functions.php";
 require_once(__DIR__ . '/../rabbitmq/path.inc');
 require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
 require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
+
+if (is_logged_in()) {
+    die(header("Location: profile.php"));
+}
 ?>
 
 <form action="register.php" method="POST">

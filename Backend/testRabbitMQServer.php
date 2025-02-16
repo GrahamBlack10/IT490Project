@@ -10,8 +10,8 @@ function doLogin($username,$password,$session_id)
 
   if ($mydb->errno != 0)
   {
-          echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-          return "failure";
+    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
+    return "failure";
   }
 
   echo "successfully connected to database".PHP_EOL;
@@ -26,7 +26,7 @@ function doLogin($username,$password,$session_id)
   if (password_verify($password, $user["password"])) {
     echo 'user and password found in database' . PHP_EOL;
     createSession($user['id'],$user['username'], $session_id);
-    echo 'session crated, user has logged in';
+    echo 'session created,' . $username . ' has logged in' . PHP_EOL;
     return "success";
   }
 
@@ -52,9 +52,9 @@ function doRegistration($user, $password)
 
   if ($mydb->errno != 0)
   {
-          echo "failed to execute query:".PHP_EOL;
-          echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
-          return "failure";
+    echo "failed to execute query:".PHP_EOL;
+    echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
+    return "failure";
   }
 
   if ($mydb->query($query) === TRUE)
@@ -69,6 +69,7 @@ function doRegistration($user, $password)
     return "failure";
   }
 }
+
 function createSession($id, $user, $session_id) {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
   $query = "INSERT INTO Sessions (session_id,user_id,username) VALUES ('$session_id','$id','$user')";
@@ -80,8 +81,6 @@ function createSession($id, $user, $session_id) {
     }
 
     if ($mydb->query($query) === TRUE) {
-      echo "session created" . PHP_EOL;
-      echo $user . ' has logged in' . PHP_EOL;
       return "success";
     }
 
@@ -92,9 +91,29 @@ function createSession($id, $user, $session_id) {
 }
 
 function doSessionVerification($session_id) {
-  
+  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
 
+  if ($mydb->errno != 0)
+  {
+    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
+    return "failure";
+  }
+
+  echo "successfully connected to database".PHP_EOL;
+
+  $query = "SELECT session_id FROM Sessions WHERE session_id='$session_id'";
+  $result = $mydb->query($query);
+
+  if ($result->num_rows == 0) {
+    echo "session not found";
+    return "failure";
+  }
+  else {
+    echo "session found";
+    return "success";
+  }
 }
+
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -109,6 +128,8 @@ function requestProcessor($request)
       return doLogin($request['user'],$request['password'],$request['session_id']);
     case "registration":
       return doRegistration($request['user'],$request['password']);
+    case "validate_session":
+      return doSessionVerification($request['session_id']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

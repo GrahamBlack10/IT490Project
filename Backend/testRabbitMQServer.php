@@ -13,11 +13,13 @@ function requestProcessor($request)
     return "ERROR: unsupported message type";
   }
   else {
-    echo 'Sending to data server:' . PHP_EOL;
-    $server = new rabbitMQClient("testRabbitMQListener.ini","testServer");
-    $response = $server->send_request($request);
-    echo $response;
-    echo 'Above is the returned data' . PHP_EOL;
+    echo 'Request sent to data server' . PHP_EOL;
+    echo 'Waiting for response...' . PHP_EOL;
+    $serverListener = new rabbitMQClient("testRabbitMQListener.ini","testServer");
+    $response = $serverListener->send_request($request);
+    echo 'Response: ' . $response . PHP_EOL;
+    echo 'Returning response to client' . PHP_EOL;
+    echo "-------------------" . PHP_EOL;
     return $response;
   }
 }

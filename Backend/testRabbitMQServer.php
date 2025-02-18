@@ -36,7 +36,7 @@ function doLogin($username,$password,$session_id)
   }
 }
 
-function doRegistration($user, $password)
+function doRegistration($user, $password, $email)
 {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
 
@@ -48,7 +48,7 @@ function doRegistration($user, $password)
 
   echo "successfully connected to database".PHP_EOL;
 
-  $query = "INSERT INTO Users (username,password) VALUES ('$user','$password')";
+  $query = "INSERT INTO Users (username,password,email) VALUES ('$user','$password','$email')";
 
   if ($mydb->errno != 0)
   {
@@ -127,7 +127,7 @@ function requestProcessor($request)
     case "login":
       return doLogin($request['user'],$request['password'],$request['session_id']);
     case "registration":
-      return doRegistration($request['user'],$request['password']);
+      return doRegistration($request['user'],$request['password'],$request['email']);
     case "validate_session":
       return doSessionVerification($request['session_id']);
   }

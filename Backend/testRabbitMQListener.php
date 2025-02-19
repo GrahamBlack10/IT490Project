@@ -141,10 +141,10 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-$server = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$server = new rabbitMQServer("testRabbitMQListener.ini","testServer");
 
-echo "testRabbitMQServer BEGIN".PHP_EOL;
+echo "testRabbitMQListener BEGIN".PHP_EOL;
 $server->process_requests('requestProcessor');
-echo "testRabbitMQServer END".PHP_EOL;
+echo "testRabbitMQListener END".PHP_EOL;
 exit();
 ?>

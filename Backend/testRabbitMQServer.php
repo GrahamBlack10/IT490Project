@@ -121,6 +121,16 @@ function doSessionVerification($session_id) {
   }
 }
 
+function populateDatabase($data) {
+  // Process the data here. Should return either "success" or "failure" 
+  // checkDataDuplicates() should be used in here 
+}
+
+function checkDataDuplicates($entry) {
+  // Checks to see if an entry already exists in the database 
+  // Return true if there is duplicate, false if there is not 
+}
+
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -137,6 +147,9 @@ function requestProcessor($request)
       return doRegistration($request['user'],$request['password'],$request['email']);
     case "validate_session":
       return doSessionVerification($request['session_id']);
+    // This is where the populateDatabase() will be called 
+    case "populate_database":
+      return populateDatabase($request['data']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

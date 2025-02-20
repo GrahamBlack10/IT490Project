@@ -1,4 +1,7 @@
 <?php
+require_once(__DIR__ . '/../rabbitmq/path.inc');
+require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
+require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 
 $curl = curl_init();
 
@@ -26,6 +29,18 @@ if ($err) {
 } else {
     // Decode JSON response
     $data = json_decode($response, true);
+
+    // Send this data to the server for processing 
+    $request = array();
+    $request["type"] = "populate_database";
+    $request["data"] = $data;
+    // Check to make sure that array is populated. Not 100% sure if this will work 
+    var_dump($request);
+    // Establish connection to broker then send request and get a response
+    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+    $response = $client->send_request($request);
+    // Gonna either be success or failure 
+    echo $response;
 
     // Display the decoded JSON in a readable format
     echo "<pre>";

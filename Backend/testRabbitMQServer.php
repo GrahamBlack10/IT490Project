@@ -95,7 +95,7 @@ function createSession($id, $user, $session_id) {
     }
 }
 
-function doSessionVerification($session_id) {
+function verifySession($session_id) {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
 
   if ($mydb->errno != 0)
@@ -119,6 +119,22 @@ function doSessionVerification($session_id) {
     echo "-------------------" . PHP_EOL;
     return "success";
   }
+}
+
+function getUserID($session_id) {
+  // should return a string containing the user's ID from the Sessions table 
+}
+
+function getUsername($session_id) {
+  // should return a string contain the user's username from the Sessions table 
+}
+
+function getMovies($filter) {
+  // Will need this once we have data in the Movies table
+}
+
+function getMovieDetails($movie_id) {
+  // Will need this once we have data in the Movies table
 }
 
 function populateDatabase($data) {
@@ -146,10 +162,18 @@ function requestProcessor($request)
     case "registration":
       return doRegistration($request['user'],$request['password'],$request['email']);
     case "validate_session":
-      return doSessionVerification($request['session_id']);
+      return verifySession($request['session_id']);
     // This is where the populateDatabase() will be called 
     case "populate_database":
       return populateDatabase($request['data']);
+    case "get_movies":
+      return getMovies($request["filter"]);
+    case "get_movie_details":
+      return getMovieDetails($request['movie_id']);
+    case "get_user_id":
+      return getUserID($request['session_id']);
+      case "get_username":
+        return getUsername($request['session_id']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

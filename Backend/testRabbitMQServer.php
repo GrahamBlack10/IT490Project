@@ -147,6 +147,53 @@ function checkDataDuplicates($entry) {
   // Return true if there is duplicate, false if there is not 
 }
 
+function createForum($title, $description) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Forums (title, description) 
+              VALUES (:title, :description)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':title' => $title,
+        ':description' => $description,
+    ]);
+    
+    echo "Forum post created" . PHP_EOL;
+} catch (PDOException $e) {
+    echo "Database error: " . $e->getMessage() . PHP_EOL;
+}
+
+$pdo = null;
+return "success";
+}
+
+function getForums() {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Forums";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([]);
+
+    if ($r) {
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned all forum titles and descriptions" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+} catch (PDOException $e) {
+    echo "Database error: " . $e->getMessage() . PHP_EOL;
+    return 'error';
+}
+}
+
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -172,8 +219,12 @@ function requestProcessor($request)
       return getMovieDetails($request['movie_id']);
     case "get_user_id":
       return getUserID($request['session_id']);
-      case "get_username":
-        return getUsername($request['session_id']);
+    case "get_username":
+      return getUsername($request['session_id']);
+    case "create_forum":
+      return createForum($request['title'], $request['description']);
+    case "get_forums":
+      return getForums();
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

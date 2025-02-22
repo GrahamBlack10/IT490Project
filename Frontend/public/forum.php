@@ -51,9 +51,11 @@ if (!is_logged_in()) {
     $response = $client->send_request($request);
 
     foreach ($response as $forum) { 
-?>
+    ?>
         <ul class="list-group">
         <li class="list-group-item"><?php echo $forum['title']?></li>
         <li class="list-group-item"><?php echo $forum['description']?><br/><br/></li>
         </ul>
-<?php } ?>
+<?php 
+    }
+?>

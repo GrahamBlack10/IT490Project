@@ -33,7 +33,7 @@ if (is_logged_in()) {
             <input type="password" name="confirm" class="form-control" id="confirm" placeholder="Confirm Password">
         </div>
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Register</button>
 </form>
 
 <?php 

@@ -95,7 +95,7 @@ function createSession($id, $user, $session_id) {
     }
 }
 
-function doSessionVerification($session_id) {
+function verifySession($session_id) {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
 
   if ($mydb->errno != 0)
@@ -121,14 +121,140 @@ function doSessionVerification($session_id) {
   }
 }
 
-function populateDatabase($data) {
-  // Process the data here. Should return either "success" or "failure" 
-  // checkDataDuplicates() should be used in here 
+function getUserID($session_id) {
+  // should return a string containing the user's ID from the Sessions table 
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+     
+ $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
+  $stmt = $pdo->prepare($n);
+  $stmt->execute ([
+            ':sessionID'=> $session_id
+          ]);
+  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+    $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user_id = $session['user_id'];
+    return $user_id;
+  } else {
+    return "No UserID for this session";
+  }
+  
+  } catch (PDOException $e) {
+    echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+}
+$pdo = null;
+return "success";
 }
 
-function checkDataDuplicates($entry) {
-  // Checks to see if an entry already exists in the database 
-  // Return true if there is duplicate, false if there is not 
+function getUsername($session_id) {
+  // should return a string contain the user's username from the Sessions table 
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+     
+ $n = "SELECT username FROM Sessions where session_id = :sessionID";
+  $stmt = $pdo->prepare($n);
+  $stmt->execute ([
+            ':sessionID'=> $session_id['session_ID']
+          ]);
+  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+    $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    $username = $session['username'];
+    return $username;
+  }
+  
+  } catch (PDOException $e) {
+    echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+}
+$pdo = null;
+return "success";
+}
+
+function getMovies($filter) {
+  // Will need this once we have data in the Movies table
+}
+
+function getMovieDetails($movie_id) {
+  // Will need this once we have data in the Movies table
+}
+
+function populateDatabase($data) {
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      
+      $query = "INSERT INTO Movies (imdb_id, title, description, image, releaseDate, genre) 
+                VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
+      
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':imdb_id' => $data['imdbID'],
+          ':title' => $data['Title'],
+          ':description' => $data['Plot'],
+          ':image' => $data['Poster'],
+          ':release_date' => $data['Released'],
+          ':genre' => $data['Genre']
+
+
+      ]);
+      
+      echo "Inserted movie: " . $data['Title'] . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+  
+  $pdo = null;
+  return "success";
+}
+
+function createForum($title, $description) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Forums (title, description) 
+              VALUES (:title, :description)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':title' => $title,
+        ':description' => $description,
+    ]);
+    
+    echo "Forum post created" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return "success";
+}
+
+function getForums() {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Forums";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([]);
+
+    if ($r) {
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned all forum titles and descriptions" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+} catch (PDOException $e) {
+    echo "Database error: " . $e->getMessage() . PHP_EOL;
+    return 'error';
+}
 }
 
 function requestProcessor($request)
@@ -146,10 +272,22 @@ function requestProcessor($request)
     case "registration":
       return doRegistration($request['user'],$request['password'],$request['email']);
     case "validate_session":
-      return doSessionVerification($request['session_id']);
+      return verifySession($request['session_id']);
     // This is where the populateDatabase() will be called 
     case "populate_database":
       return populateDatabase($request['data']);
+    case "get_movies":
+      return getMovies($request["filter"]);
+    case "get_movie_details":
+      return getMovieDetails($request['movie_id']);
+    case "get_user_id":
+      return getUserID($request['session_id']);
+    case "get_username":
+      return getUsername($request['session_id']);
+    case "create_forum":
+      return createForum($request['title'], $request['description']);
+    case "get_forums":
+      return getForums();
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

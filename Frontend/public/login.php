@@ -24,7 +24,7 @@ if (is_logged_in()) {
             <input type="password" name="password" class="form-control" id="password" placeholder="Password">
         </div>
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Login</button>
 </form>
 
 <?php 
@@ -39,7 +39,6 @@ if (is_logged_in()) {
         $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
         $response = $client->send_request($request);
         if ($response === 'success') {
-            echo $response . 'Login successful!';
             die(header("Location: profile.php"));
         }
 

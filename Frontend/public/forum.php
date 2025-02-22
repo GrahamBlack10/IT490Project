@@ -15,7 +15,7 @@ if (!is_logged_in()) {
 <form action="forum.php" method="POST">
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <span class="input-group-text" id="inputGroup-sizing-default">Title:</span>
+            <span class="input-group-text" id="inputGroup-sizing-default">Title</span>
         </div>
     <input type="text" class="form-control" name="forum_title" id="forum_title" aria-describedby="inputGroup-sizing-default">
     </div>
@@ -26,7 +26,7 @@ if (!is_logged_in()) {
         </div>
     <textarea class="form-control" name="forum_description" id="forum_description"></textarea>
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Add forum</button>
 </form>
 
 <?php
@@ -50,8 +50,10 @@ if (!is_logged_in()) {
     $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
     $response = $client->send_request($request);
 
-    foreach ($response as $forum) {
-        echo $forum['title'] . PHP_EOL;
-        echo $forum['description'] . PHP_EOL;
-    }
+    foreach ($response as $forum) { 
 ?>
+        <ul class="list-group">
+        <li class="list-group-item"><?php echo $forum['title']?></li>
+        <li class="list-group-item"><?php echo $forum['description']?><br/><br/></li>
+        </ul>
+<?php } ?>

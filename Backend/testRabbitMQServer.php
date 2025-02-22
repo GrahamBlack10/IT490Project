@@ -173,7 +173,6 @@ $pdo = null;
 return "success";
 }
 
-
 function getMovies($filter) {
   // Will need this once we have data in the Movies table
 }
@@ -226,12 +225,12 @@ function createForum($title, $description) {
     ]);
     
     echo "Forum post created" . PHP_EOL;
-} catch (PDOException $e) {
-    echo "Database error: " . $e->getMessage() . PHP_EOL;
-}
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
 
-$pdo = null;
-return "success";
+  $pdo = null;
+  return "success";
 }
 
 function getForums() {
@@ -293,22 +292,6 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-// Check if the form is submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // Get the session ID from the form
-  $session_id = $_POST['session_id'];
-  
-  // Call the getUserID function
-  $user_id = getUserID($session_id);
-  
-  // Display the result
-  echo "<h2>User ID for session ID: $session_id</h2>";
-  if ($user_id === "error") {
-      echo "<p>Error: No user found or an issue occurred with the query.</p>";
-  } else {
-      echo "<p>User ID: $user_id</p>";
-  }
-}
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;

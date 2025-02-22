@@ -145,7 +145,7 @@ function getUserID($session_id) {
     echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
 }
 $pdo = null;
-return "error";
+return "success";
 }
 
 function getUsername($session_id) {
@@ -292,6 +292,10 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8dc17d7 (2nd push RH)
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;

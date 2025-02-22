@@ -138,13 +138,32 @@ function getMovieDetails($movie_id) {
 }
 
 function populateDatabase($data) {
-  // Process the data here. Should return either "success" or "failure" 
-  // checkDataDuplicates() should be used in here 
-}
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      
+      $query = "INSERT INTO Movies (imdb_id, title, description, image, releaseDate, genre) 
+                VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
+      
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':imdb_id' => $data['imdbID'],
+          ':title' => $data['Title'],
+          ':description' => $data['Plot'],
+          ':image' => $data['Poster'],
+          ':release_date' => $data['Released'],
+          ':genre' => $data['Genre']
 
-function checkDataDuplicates($entry) {
-  // Checks to see if an entry already exists in the database 
-  // Return true if there is duplicate, false if there is not 
+
+      ]);
+      
+      echo "Inserted movie: " . $data['Title'] . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+  
+  $pdo = null;
+  return "success";
 }
 
 function createForum($title, $description) {

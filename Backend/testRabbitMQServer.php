@@ -123,13 +123,56 @@ function verifySession($session_id) {
 
 function getUserID($session_id) {
   // should return a string containing the user's ID from the Sessions table 
-  
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+     
+ $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
+  $stmt = $pdo->prepare($n);
+  $stmt->execute ([
+            ':sessionID'=> $session_id
+          ]);
+  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+    $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user_id = $session['user_id'];
+    return $user_id;
+  } else {
+    return "No UserID for this session";
+  }
+  
+  } catch (PDOException $e) {
+    echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+}
+$pdo = null;
+return "error";
 }
 
 function getUsername($session_id) {
   // should return a string contain the user's username from the Sessions table 
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+     
+ $n = "SELECT username FROM Sessions where session_id = :sessionID";
+  $stmt = $pdo->prepare($n);
+  $stmt->execute ([
+            ':sessionID'=> $session_id['session_ID']
+          ]);
+  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+    $session = $stmt->fetch(PDO::FETCH_ASSOC);
+    $username = $session['username'];
+    return $username;
+  }
+  
+  } catch (PDOException $e) {
+    echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
 }
+$pdo = null;
+return "success";
+}
+
 
 function getMovies($filter) {
   // Will need this once we have data in the Movies table
@@ -250,6 +293,22 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  // Get the session ID from the form
+  $session_id = $_POST['session_id'];
+  
+  // Call the getUserID function
+  $user_id = getUserID($session_id);
+  
+  // Display the result
+  echo "<h2>User ID for session ID: $session_id</h2>";
+  if ($user_id === "error") {
+      echo "<p>Error: No user found or an issue occurred with the query.</p>";
+  } else {
+      echo "<p>User ID: $user_id</p>";
+  }
+}
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;

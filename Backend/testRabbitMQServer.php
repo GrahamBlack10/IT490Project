@@ -123,6 +123,8 @@ function verifySession($session_id) {
 
 function getUserID($session_id) {
   // should return a string containing the user's ID from the Sessions table 
+  
+
 }
 
 function getUsername($session_id) {

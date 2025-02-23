@@ -19,5 +19,13 @@ function is_logged_in() {
 	}
 	return $isLoggedIn;
 }
+function getMovies() {
+    // Sample movie data; Will get replaced with Database Data
+    return [
+        ['title' => 'Movie One', 'image' => 'images/movie1.jpg', 'rating' => 4],
+        ['title' => 'Movie Two', 'image' => 'images/movie2.jpg', 'rating' => 5],
+        ['title' => 'Movie Three', 'image' => 'images/movie3.jpg', 'rating' => 3],
+    ];
+}
 
 ?>

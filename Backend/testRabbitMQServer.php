@@ -123,6 +123,7 @@ function verifySession($session_id) {
 
 function getUserID($session_id) {
   // should return a string containing the user's ID from the Sessions table 
+  
   try{
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -131,12 +132,11 @@ function getUserID($session_id) {
  $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
   $stmt = $pdo->prepare($n);
   $stmt->execute ([
-            ':sessionID'=> $session_id
+            ':sessionID' => $session_id
           ]);
   if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
-    $user_id = $session['user_id'];
-    return $user_id;
+    return $session['user_id'];
   } else {
     return "No UserID for this session";
   }
@@ -145,7 +145,7 @@ function getUserID($session_id) {
     echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
 }
 $pdo = null;
-return "success";
+return null;
 }
 
 function getUsername($session_id) {
@@ -158,19 +158,21 @@ function getUsername($session_id) {
  $n = "SELECT username FROM Sessions where session_id = :sessionID";
   $stmt = $pdo->prepare($n);
   $stmt->execute ([
-            ':sessionID'=> $session_id['session_ID']
-          ]);
+    ':sessionID' => $session_id
+  ]);
   if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
-    $username = $session['username'];
-    return $username;
-  }
+    return $session['username'];
+  } else{
+return "No UserName for this session";
+}
+
   
   } catch (PDOException $e) {
     echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
 }
 $pdo = null;
-return "success";
+return null;
 }
 
 function getMovies($filter) {

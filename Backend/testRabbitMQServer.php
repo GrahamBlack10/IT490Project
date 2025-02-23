@@ -122,57 +122,49 @@ function verifySession($session_id) {
 }
 
 function getUserID($session_id) {
-  // should return a string containing the user's ID from the Sessions table 
-  
   try{
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-     
- $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
-  $stmt = $pdo->prepare($n);
-  $stmt->execute ([
-            ':sessionID' => $session_id
-          ]);
-  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
-    $session = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $session['user_id'];
-  } else {
-    return "No UserID for this session";
-  }
-  
+    $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+              ':sessionID' => $session_id
+            ]);
+    if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['user_id'];
+    } else {
+      return "No UserID for this session";
+    }
   } catch (PDOException $e) {
     echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
-}
-$pdo = null;
-return null;
+  }
+  $pdo = null;
+  return null;
 }
 
 function getUsername($session_id) {
-  // should return a string contain the user's username from the Sessions table 
   try{
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-     
- $n = "SELECT username FROM Sessions where session_id = :sessionID";
-  $stmt = $pdo->prepare($n);
-  $stmt->execute ([
-    ':sessionID' => $session_id
-  ]);
-  if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
-    $session = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $session['username'];
-  } else{
-return "No UserName for this session";
-}
-
-  
+    $n = "SELECT username FROM Sessions where session_id = :sessionID";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+      ':sessionID' => $session_id
+    ]);
+    if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['username'];
+    } else{
+      return "No UserName for this session";
+    }
   } catch (PDOException $e) {
-    echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
-}
-$pdo = null;
-return null;
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
 }
 
 function getMovies($filter) {
@@ -212,18 +204,19 @@ function populateDatabase($data) {
   return "success";
 }
 
-function createForum($title, $description) {
+function createForum($title, $description, $session_id) {
   try {
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    $query = "INSERT INTO Forums (title, description) 
-              VALUES (:title, :description)";
+    $query = "INSERT INTO Forums (title, description, user) 
+              VALUES (:title, :description, :user)";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute([
         ':title' => $title,
         ':description' => $description,
+        ':user' => getUsername($session_id),
     ]);
     
     echo "Forum post created" . PHP_EOL;
@@ -253,10 +246,86 @@ function getForums() {
     else {
       echo "what the fuck" . PHP_EOL;
     }
-} catch (PDOException $e) {
-    echo "Database error: " . $e->getMessage() . PHP_EOL;
-    return 'error';
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
 }
+
+function getForumPost($id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Forums WHERE id = :id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      'id' => $id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned forum number " . $id . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
+}
+
+function createForumComment($comment, $forum_id, $session_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Forum_Comments (forum_id, comment, user) 
+              VALUES (:forum_id, :comment, :user)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':forum_id' => $forum_id,
+        ':comment' => $comment,
+        ':user' => getUsername($session_id),
+    ]);
+    
+    echo "Forum comment created" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return "success";
+}
+
+function getForumComments($forum_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Forum_Comments WHERE forum_id = :forum_id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      'forum_id' => $forum_id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned all forum comments" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
 }
 
 function requestProcessor($request)
@@ -275,7 +344,6 @@ function requestProcessor($request)
       return doRegistration($request['user'],$request['password'],$request['email']);
     case "validate_session":
       return verifySession($request['session_id']);
-    // This is where the populateDatabase() will be called 
     case "populate_database":
       return populateDatabase($request['data']);
     case "get_movies":
@@ -287,9 +355,15 @@ function requestProcessor($request)
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":
-      return createForum($request['title'], $request['description']);
+      return createForum($request['title'], $request['description'], $request['session_id']);
     case "get_forums":
       return getForums();
+    case "get_forum_post":
+      return getForumPost($request['id']);
+    case "create_forum_comment":
+      return createForumComment($request['comment'], $request['forum_id'], $request['session_id']);
+    case "get_forum_comments":
+      return getForumComments($request['forum_id']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

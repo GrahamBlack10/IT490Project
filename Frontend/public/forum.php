@@ -37,6 +37,7 @@ if (!is_logged_in()) {
         $request['type'] = 'create_forum'; 
         $request['title'] = $title;
         $request['description'] = $description;
+        $request['session_id'] = session_id();
         $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
         $response = $client->send_request($request);
 
@@ -53,7 +54,9 @@ if (!is_logged_in()) {
     foreach ($response as $forum) { 
     ?>
         <ul class="list-group">
-        <li class="list-group-item"><?php echo $forum['title']?></li>
+        <li class="list-group-item"><a href="forum_post.php?id=<?php echo $forum['id']?>"><?php echo $forum['title']?></a></li>
+        <li class="list-group-item"><?php echo "Author: " . $forum['user']?></li>
+        <li class="list-group-item"><?php echo $forum['created']?></li>
         <li class="list-group-item"><?php echo $forum['description']?><br/><br/></li>
         </ul>
 <?php 

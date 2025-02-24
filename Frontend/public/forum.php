@@ -30,35 +30,32 @@ if (!is_logged_in()) {
 </form>
 
 <?php
-    if (isset($_POST["forum_title"]) && isset($_POST["forum_description"])) {
-        $title = $_POST["forum_title"];
-        $description = $_POST["forum_description"];
-        $request = array();
-        $request['type'] = 'create_forum'; 
-        $request['title'] = $title;
-        $request['description'] = $description;
-        $request['session_id'] = session_id();
-        $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-        $response = $client->send_request($request);
-
-        if ($response === 'success') {
-            echo 'Post created!';
-        }
-    }
-
+if (isset($_POST["forum_title"]) && isset($_POST["forum_description"])) {
+    $title = $_POST["forum_title"];
+    $description = $_POST["forum_description"];
     $request = array();
-    $request['type'] = 'get_forums';
+    $request['type'] = 'create_forum'; 
+    $request['title'] = $title;
+    $request['description'] = $description;
+    $request['session_id'] = session_id();
     $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
     $response = $client->send_request($request);
 
-    foreach ($response as $forum) { 
-    ?>
-        <ul class="list-group">
+    if ($response === 'success') {
+        echo 'Post created!';
+    }
+}
+
+$request = array();
+$request['type'] = 'get_forums';
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
+
+foreach ($response as $forum) { ?>
+    <ul class="list-group">
         <li class="list-group-item"><a href="forum_post.php?id=<?php echo $forum['id']?>"><?php echo $forum['title']?></a></li>
         <li class="list-group-item"><?php echo "Author: " . $forum['user']?></li>
         <li class="list-group-item"><?php echo $forum['created']?></li>
         <li class="list-group-item"><?php echo $forum['description']?><br/><br/></li>
-        </ul>
-<?php 
-    }
-?>
+    </ul>
+<?php } ?>

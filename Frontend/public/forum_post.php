@@ -56,7 +56,11 @@ $request['type'] = 'get_forum_comments';
 $request['forum_id'] = $id; 
 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 $response = $client->send_request($request);
-var_dump($response);
 
-
-?>
+foreach($response as $comment) {?>
+    <ul class="list-group">
+        <li class="list-group-item"><?php echo "Commenter: " . $comment['user']?></li>
+        <li class="list-group-item"><?php echo $comment['created']?></li>
+        <li class="list-group-item"><?php echo $comment['comment']?></li>
+    </ul>
+<?php } ?>

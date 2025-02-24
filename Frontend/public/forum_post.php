@@ -23,13 +23,15 @@ $created = $response['created'];
 $description = $response['description'];
 ?>
 
+<br>
 <ul class="list-group">
-  <li class="list-group-item"><?php echo $title; ?></li>
+  <li class="list-group-item"><p class="font-weight-bold"><?php echo $title; ?></p></li>
   <li class="list-group-item"><?php echo $user; ?></li>
   <li class="list-group-item"><?php echo $created; ?></li>
   <li class="list-group-item"><?php echo $description; ?></li>
 </ul>
 
+<br>
 <form action="forum_post.php?id=<?php echo $id; ?>" method="POST">
     <div class="input-group">
         <div class="input-group-prepend">
@@ -52,12 +54,14 @@ if (isset($_POST['comment'])) {
     $response = $client->send_request($request);
 }
 
+$request = array();
 $request['type'] = 'get_forum_comments';
 $request['forum_id'] = $id; 
 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 $response = $client->send_request($request);
 
 foreach($response as $comment) {?>
+    <br>
     <ul class="list-group">
         <li class="list-group-item"><?php echo "Commenter: " . $comment['user']?></li>
         <li class="list-group-item"><?php echo $comment['created']?></li>

@@ -12,6 +12,7 @@ if (!is_logged_in()) {
 
 ?>
 
+<br>
 <form action="forum.php" method="POST">
     <div class="input-group mb-3">
         <div class="input-group-prepend">
@@ -52,8 +53,9 @@ $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testSer
 $response = $client->send_request($request);
 
 foreach ($response as $forum) { ?>
+    <br>
     <ul class="list-group">
-        <li class="list-group-item"><a href="forum_post.php?id=<?php echo $forum['id']?>"><?php echo $forum['title']?></a></li>
+        <li class="list-group-item"><p class="font-weight-bold"><a href="forum_post.php?id=<?php echo $forum['id']?>"><?php echo $forum['title']?></p></a></li>
         <li class="list-group-item"><?php echo "Author: " . $forum['user']?></li>
         <li class="list-group-item"><?php echo $forum['created']?></li>
         <li class="list-group-item"><?php echo $forum['description']?><br/><br/></li>

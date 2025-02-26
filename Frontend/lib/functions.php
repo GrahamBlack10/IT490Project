@@ -19,5 +19,27 @@ function is_logged_in() {
 	}
 	return $isLoggedIn;
 }
+function getMovies() {
+    return [
+        [
+            'title'  => 'Movie One',
+            'image'  => 'images/movie1.jpg',
+            'rating' => 4,
+            'id'     => '1'
+        ],
+        [
+            'title'  => 'Movie Two',
+            'image'  => 'images/movie2.jpg',
+            'rating' => 5,
+            'id'     => '2'
+        ],
+        [
+            'title'  => 'Movie Three',
+            'image'  => 'images/movie3.jpg',
+            'rating' => 3,
+            'id'     => '3'
+        ],
+    ];
+}
 
 ?>

@@ -184,7 +184,7 @@ function populateDatabase($data) {
                 VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
       
       // Loop through each movie in the data
-      foreach ($data as $movie) {
+      foreach ($data ['results']as $movie) {
           // Check for duplicates (based on imdb_id)
           $checkQuery = "SELECT COUNT(*) FROM Movies WHERE imdb_id = :imdb_id";
           $stmt = $pdo->prepare($checkQuery);
@@ -200,7 +200,7 @@ function populateDatabase($data) {
                   ':description' => $movie['overview'],
                   ':image' => $movie['poster_path'],
                   ':release_date' => $movie['release_date'],
-                  ':genre' => $movie['genre'] 
+                  ':vote average' => $movie['vote_average'] 
               ]);
 
               echo "Inserted movie: " . $movie['title'] . PHP_EOL;

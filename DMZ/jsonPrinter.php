@@ -1,7 +1,7 @@
 <?php
 
 $api_key = "86a1bb882411e830da6e1187379aa81d";
-$url = "https://api.themoviedb.org/3/movie/latest?api_key=$api_key"; 
+$url = "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1&api_key=$api_key"; 
 
 $curl = curl_init();
 
@@ -27,20 +27,11 @@ if ($err) {
     $data = json_decode($response, true);
 
     // Check if the movie meets the filter criteria
-    if (
-        isset($data['imdb_id']) && $data['imdb_id'] !== NULL &&
-        isset($data['poster_path']) && $data['poster_path'] !== NULL &&
-        isset($data['title']) && !empty($data['title']) &&
-        isset($data['overview']) && !empty($data['overview']) &&
-        isset($data['release_date']) && !empty($data['release_date'])
-    ) {
+
         // Print the filtered data
         echo "<pre>";
         echo json_encode($data, JSON_PRETTY_PRINT);
         echo "</pre>";
-    } else {
-        echo "No valid movie found based on the filters.";
-    }
 }
 
 ?>

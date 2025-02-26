@@ -5,7 +5,7 @@ require_once(__DIR__ . '/rabbitmq/get_host_info.inc');
 require_once(__DIR__ . '/rabbitmq/rabbitMQLib.inc');
 
 $api_key = "86a1bb882411e830da6e1187379aa81d";
-$url = "https://api.themoviedb.org/3/movie/latest?api_key=$api_key"; 
+$url = "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1&api_key=$api_key"; 
 
 $curl = curl_init();
 
@@ -31,13 +31,7 @@ if ($err) {
     $data = json_decode($response, true);
 
     // Check if the required fields exist and are not NULL
-    if (
-        isset($data['imdb_id']) && $data['imdb_id'] !== NULL &&
-        isset($data['poster_path']) && $data['poster_path'] !== NULL &&
-        isset($data['title']) && !empty($data['title']) &&
-        isset($data['overview']) && !empty($data['overview']) &&
-        isset($data['release_date']) && !empty($data['release_date'])
-    ) {
+  
         // Send this data to the server for processing
         $request = [
             "type" => "populate_database",
@@ -66,10 +60,6 @@ if ($err) {
         echo "<h2>Most Popular Movies (TMDb):</h2>";
         echo "Title: " . htmlspecialchars($data['title']) . "<br>";
         echo "Release Date: " . htmlspecialchars($data['release_date']) . "<br>";
-    } else {
-        // Handle invalid data: missing required fields
-        echo "<pre>Invalid movie data received. Skipping...</pre>";
-    }
 }
 
 ?>

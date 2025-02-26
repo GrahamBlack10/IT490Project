@@ -179,27 +179,40 @@ function populateDatabase($data) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      
+
       $query = "INSERT INTO Movies (imdb_id, title, description, image, releaseDate, genre) 
                 VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
       
-      $stmt = $pdo->prepare($query);
-      $stmt->execute([
-          ':imdb_id' => $data['imdbID'],
-          ':title' => $data['Title'],
-          ':description' => $data['Plot'],
-          ':image' => $data['Poster'],
-          ':release_date' => $data['Released'],
-          ':genre' => $data['Genre']
+      // Loop through each movie in the data
+      foreach ($data as $movie) {
+          // Check for duplicates (based on imdb_id)
+          $checkQuery = "SELECT COUNT(*) FROM Movies WHERE imdb_id = :imdb_id";
+          $stmt = $pdo->prepare($checkQuery);
+          $stmt->execute([':imdb_id' => $movie['imdb_id']]);
+          $count = $stmt->fetchColumn();
 
+          if ($count == 0) {
+              // If no duplicate, insert the movie
+              $stmt = $pdo->prepare($query);
+              $stmt->execute([
+                  ':imdb_id' => $movie['imdb_id'],
+                  ':title' => $movie['title'],
+                  ':description' => $movie['overview'],
+                  ':image' => $movie['poster_path'],
+                  ':release_date' => $movie['release_date'],
+                  ':genre' => $movie['genre'] 
+              ]);
 
-      ]);
-      
-      echo "Inserted movie: " . $data['Title'] . PHP_EOL;
+              echo "Inserted movie: " . $movie['title'] . PHP_EOL;
+          } else {
+              echo "Duplicate movie skipped: " . $movie['title'] . PHP_EOL;
+          }
+      }
+
   } catch (PDOException $e) {
       echo "Database error: " . $e->getMessage() . PHP_EOL;
   }
-  
+
   $pdo = null;
   return "success";
 }

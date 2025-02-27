@@ -217,6 +217,81 @@ function getMovieDetails($tmdb_id) {
   return null;
 }
 
+function createMovieReview($session_id, $movie_id, $rating, $review) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Movie_Reviews (movie_id, rating, review, user) 
+              VALUES (:movie_id, :rating, :review, :user)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':movie_id' => $movie_id,
+        ':rating' => $rating,
+        ':review' => $review,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Movie review created" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return "Review created";
+}
+
+function getMovieReviews($movie_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Movie_Reviews WHERE movie_id = :movie_id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      ':movie_id' => $movie_id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      echo "Returned all movie reviews" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
+}
+
+function getAverageRating($movie_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT AVG(rating) as average_rating FROM Movie_Reviews WHERE movie_id = :movie_id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      ':movie_id' => $movie_id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned average rating for $movie_id" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
+}
 
 function populateDatabase($data) {
   try {
@@ -406,8 +481,12 @@ function requestProcessor($request)
       return getMovies();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
-    case "get_user_id":
-      return getUserID($request['session_id']);
+    case "create_movie_review":
+      return createMovieReview($request['session_id'], $request['movie_id'], $request['rating'], $request['review']);
+    case "get_movie_reviews":
+      return getMovieReviews($request['movie_id']);
+    case "get_average_rating":
+      return getAverageRating($request['movie_id']);
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

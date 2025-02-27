@@ -20,10 +20,14 @@ $response = $client->send_request($request);
 $title = $response['title']; 
 $releaseDate = $response['releaseDate'];
 $summary = $response['description'];
-//$image = substr($response['image'], 1);
 $image = $response['image'];
-//Check to see if the image path is correct
-//$average_rating;
+
+$request = array();
+$request['type'] = 'get_average_rating';
+$request['movie_id'] = $tmdb_id;
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
+$averageRating = $response['average_rating']; 
 ?>
 
 <div class="card" style="width: 18rem;">
@@ -31,11 +35,12 @@ $image = $response['image'];
   <div class="card-body">
     <h5 class="card-title"><?php echo $title ?></h5>
     <p class="card-text"><?php echo $releaseDate ?></p>
+    <p class="card-text"><?php echo 'Average Rating: ' . $averageRating ?></p>
     <p class="card-text"><?php echo $summary ?></p>
   </div>
 </div>
 
-<form action="movie.php?id=<?php echo $tmdb_id; ?>" method="POST">
+<form action="movie.php?tmdb_id=<?php echo $tmdb_id; ?>" method="POST">
     <div class="input-group">
         <div class="input-group-prepend">
             <span class="input-group-text">Review</span>
@@ -56,3 +61,31 @@ $image = $response['image'];
 
     <button type="submit" class="btn btn-primary">Add review</button>
 </form>
+
+<?php
+if (isset($_POST['review']) && isset($_POST['rating'])) {
+  $request = array();
+  $request['type'] = 'create_movie_review';
+  $request['movie_id'] = $tmdb_id;
+  $request['session_id'] = session_id();
+  $request['review'] = $_POST['review'];
+  $request['rating'] = $_POST['rating']; 
+  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+  $response = $client->send_request($request);
+}
+
+$request = array();
+$request['type'] = 'get_movie_reviews';
+$request['movie_id'] = $tmdb_id;
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
+
+foreach($response as $review) {?>
+  <br>
+  <ul class="list-group">
+      <li class="list-group-item"><?php echo "Reviewer: " . $review['user']?></li>
+      <li class="list-group-item"><?php echo $review['created']?></li>
+      <li class="list-group-item"><?php echo "Rating: " . $review['rating']?></li>
+      <li class="list-group-item"><?php echo $review['review']?></li>
+  </ul>
+<?php } ?>

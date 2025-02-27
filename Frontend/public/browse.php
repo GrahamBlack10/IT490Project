@@ -9,17 +9,23 @@ if (!is_logged_in()) {
     exit();
 }
 
-
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Retrieve movies using your getMovies() function
 $movies = getMovies();
 
-
 if (!is_array($movies)) {
     $movies = [];
     $errorMessage = "No movies can be displayed at this time.";
 }
+
+$tmdb_id = (int)$_GET['tmdb_id'];
+$request = array();
+$request["type"] = "get_movie_details";
+$request["movie_id"] = $tmdb_id;
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
+
 
 // Filter movies if a search term is provided
 if ($searchQuery !== '') {
@@ -58,13 +64,13 @@ if (empty($movies)) {
             <?php foreach($movies as $movie): ?>
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
-                        <img src="<?= htmlspecialchars($movie['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($movie['title']) ?>">
+                        <img src="https://image.tmdb.org/t/p/w500<?= htmlspecialchars($movie['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($movie['title']) ?>">
                         <div class="card-body">
                             <h5 class="card-title"><?= htmlspecialchars($movie['title']) ?></h5>
-                            <p class="card-text">Release Date: <?= htmlspecialchars($movie['release_date']) ?></p>
+                            <p class="card-text">Release Date: <?= htmlspecialchars($movie['releaseDate']) ?></p>
                         </div>
                         <div class="card-footer text-center">
-                            <a href="movie.php?tmdb_id=<?= urlencode($movie['id']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
+                            <a href="movie.php?tmdb_id=<?= urlencode($movie['tmdb_id']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
                         </div>
                     </div>
                 </div>
@@ -72,5 +78,8 @@ if (empty($movies)) {
         </div>
     </div>
 </body>
+
+
+
 
 

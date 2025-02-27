@@ -20,26 +20,16 @@ function is_logged_in() {
 	return $isLoggedIn;
 }
 function getMovies() {
-    return [
-        [
-            'title'  => 'Movie One',
-            'image'  => 'images/movie1.jpg',
-            'rating' => 4,
-            'id'     => '1'
-        ],
-        [
-            'title'  => 'Movie Two',
-            'image'  => 'images/movie2.jpg',
-            'rating' => 5,
-            'id'     => '2'
-        ],
-        [
-            'title'  => 'Movie Three',
-            'image'  => 'images/movie3.jpg',
-            'rating' => 3,
-            'id'     => '3'
-        ],
-    ];
+    
+    $request = array();
+    $request['type'] = 'get_movies';
+
+    
+    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+
+    $response = $client->send_request($request);
+    return $response;
 }
+
 
 ?>

@@ -52,6 +52,8 @@ if (isset($_POST['comment'])) {
 
     $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
     $response = $client->send_request($request);
+    header('Location: forum_post.php?id=' . $id);
+    exit;
 }
 
 $request = array();

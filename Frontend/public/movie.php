@@ -72,6 +72,8 @@ if (isset($_POST['review']) && isset($_POST['rating'])) {
   $request['rating'] = $_POST['rating']; 
   $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
   $response = $client->send_request($request);
+  header('Location: movie.php?tmdb_id=' . $tmdb_id);
+  exit;
 }
 
 $request = array();

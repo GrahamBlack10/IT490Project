@@ -167,13 +167,56 @@ function getUsername($session_id) {
   return null;
 }
 
-function getMovies($filter) {
+function getMovies() {
   // Will need this once we have data in the Movies table
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Movies";
+    $stmt = $pdo-> prepare($movie);
+    $stmt->execute ([
+      
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      return "No movies can be displayed at this time.";
+    }
+
+  } catch (PDOException $e) {
+    echo "Fetch userID error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+  }
+
+
+function getMovieDetails($tmdb_id) {
+  // Will need this once we have data in the Movies table
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Movies where tmdb_id = :tmdbID";
+    $stmt = $pdo->prepare($movie);
+    $stmt->execute ([
+      ':tmdbID' => $tmdb_id
+    ]);
+    if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } else{
+      return "No movie Details available";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
 }
 
-function getMovieDetails($movie_id) {
-  // Will need this once we have data in the Movies table
-}
 
 function populateDatabase($data) {
   try {
@@ -360,7 +403,7 @@ function requestProcessor($request)
     case "populate_database":
       return populateDatabase($request['data']);
     case "get_movies":
-      return getMovies($request["filter"]);
+      return getMovies();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
     case "get_user_id":

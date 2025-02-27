@@ -3,22 +3,23 @@ include __DIR__ . "/../partials/header.php";
 include __DIR__ . "/../partials/nav.php"; 
 include __DIR__ . "/../lib/functions.php";
 
- require_once(__DIR__ . '/../rabbitmq/path.inc');
- require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
- require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
-
-
 // Redirect users who are not logged in
 if (!is_logged_in()) {
     header("Location: login.php");
     exit();
 }
 
-// Process search query (for design, filtering is optional)
+
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Retrieve movies (using the static function for now)
+// Retrieve movies using your getMovies() function
 $movies = getMovies();
+
+
+if (!is_array($movies)) {
+    $movies = [];
+    $errorMessage = "No movies can be displayed at this time.";
+}
 
 // Filter movies if a search term is provided
 if ($searchQuery !== '') {
@@ -27,14 +28,14 @@ if ($searchQuery !== '') {
     });
 }
 
-// Fallback: if no movies are returned, display a default card
-if (!$movies) {
+// Fallback: if no movies are returned after filtering, use a default card
+if (empty($movies)) {
     $movies = [
         [
-            "title"  => "No movies found",
-            "image"  => "https://via.placeholder.com/300x450?text=No+Image",
-            "rating" => 0,
-            "id"     => "none"
+            "title"        => "No movies found",
+            "image"        => "https://via.placeholder.com/300x450?text=No+Image",
+            "release_date" => "N/A",
+            "id"           => "none"
         ]
     ];
 }
@@ -60,14 +61,10 @@ if (!$movies) {
                         <img src="<?= htmlspecialchars($movie['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($movie['title']) ?>">
                         <div class="card-body">
                             <h5 class="card-title"><?= htmlspecialchars($movie['title']) ?></h5>
-                            <p class="card-text">
-                                <?php for ($i = 0; $i < (int)$movie['rating']; $i++): ?>
-                                    <i class="fas fa-star text-warning"></i>
-                                <?php endfor; ?>
-                            </p>
+                            <p class="card-text">Release Date: <?= htmlspecialchars($movie['release_date']) ?></p>
                         </div>
                         <div class="card-footer text-center">
-                            <a href="movie.php?id=<?= urlencode($movie['id'] ?? $movie['title']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
+                            <a href="movie.php?tmdb_id=<?= urlencode($movie['id']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
                         </div>
                     </div>
                 </div>
@@ -75,6 +72,5 @@ if (!$movies) {
         </div>
     </div>
 </body>
-
 
 

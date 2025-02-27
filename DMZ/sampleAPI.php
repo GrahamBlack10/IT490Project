@@ -25,41 +25,49 @@ $err = curl_error($curl);
 curl_close($curl);
 
 if ($err) {
-    echo "cURL Error #:" . $err;
+    echo "cURL Error #:" . $err . PHP_EOL;
 } else {
     // Decode the JSON response
     $data = json_decode($response, true);
 
-    // Check if the required fields exist and are not NULL
-  
+    // Check if 'results' key exists and is an array
+    if (isset($data['results']) && is_array($data['results']) && count($data['results']) > 0) {
         // Send this data to the server for processing
         $request = [
             "type" => "populate_database",
             "data" => $data
         ];
 
-        // Debug: Output the request array to ensure it's populated correctly
-        echo "<pre>Sending request to RabbitMQ:</pre>";
-        var_dump($request);
-
         // Establish connection to the RabbitMQ broker and send the request
         $client = new rabbitMQClient(__DIR__ . "/rabbitmq/testRabbitMQ.ini", "testServer");
         $rabbitResponse = $client->send_request($request);
 
-        // Output the response received from the RabbitMQ server
-        echo "<pre>RabbitMQ Response: ";
+        // Display RabbitMQ response
+        echo "RabbitMQ Response:\n";
         print_r($rabbitResponse);
-        echo "</pre>";
+        echo "\n";
 
-        // Display the decoded JSON data in a readable format
-        echo "<pre>Decoded JSON Data:";
-        print_r($data);
-        echo "</pre>";
+        // Organize the movies into an array
+        $moviesList = [];
+        foreach ($data['results'] as $movie) {
+            $moviesList[] = [
+                "Title" => $movie['title'] ?? 'N/A',
+                "Release Date" => $movie['release_date'] ?? 'N/A'
+            ];
+        }
 
-        // Extract and display specific movie details
-        echo "<h2>Most Popular Movies (TMDb):</h2>";
-        echo "Title: " . htmlspecialchars($data['title']) . "<br>";
-        echo "Release Date: " . htmlspecialchars($data['release_date']) . "<br>";
+        // Print formatted output for CLI
+        echo "Upcoming Movies (TMDb):\n";
+        foreach ($moviesList as $movie) {
+            echo "------------------------------------\n";
+            echo "Title: " . $movie["Title"] . "\n";
+            echo "Release Date: " . $movie["Release Date"] . "\n";
+        }
+        echo "------------------------------------\n";
+
+    } else {
+        echo "No upcoming movies found in API response.\n";
+    }
 }
 
 ?>

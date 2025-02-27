@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `Movies`(
     `releaseDate` VARCHAR(15),
     `image` TEXT,
     `description` TEXT,
-    `vote average` FLOAT,
+    `vote_average` FLOAT,
     `created`    timestamp default current_timestamp,
     `modified`   timestamp default current_timestamp on update current_timestamp
 );

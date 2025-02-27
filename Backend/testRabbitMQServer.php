@@ -180,27 +180,27 @@ function populateDatabase($data) {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = "INSERT INTO Movies (imdb_id, title, description, image, releaseDate, genre) 
-                VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
+      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average) 
+                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average)";
       
       // Loop through each movie in the data
       foreach ($data ['results']as $movie) {
-          // Check for duplicates (based on imdb_id)
-          $checkQuery = "SELECT COUNT(*) FROM Movies WHERE imdb_id = :imdb_id";
+          // Check for duplicates (based on tmdb_id)
+          $checkQuery = "SELECT COUNT(*) FROM Movies WHERE tmdb_id = :tmdb_id";
           $stmt = $pdo->prepare($checkQuery);
-          $stmt->execute([':imdb_id' => $movie['imdb_id']]);
+          $stmt->execute([':tmdb_id' => $movie['id']]);
           $count = $stmt->fetchColumn();
 
           if ($count == 0) {
               // If no duplicate, insert the movie
               $stmt = $pdo->prepare($query);
               $stmt->execute([
-                  ':imdb_id' => $movie['imdb_id'],
+                  ':tmdb_id' => $movie['id'],
                   ':title' => $movie['title'],
                   ':description' => $movie['overview'],
                   ':image' => $movie['poster_path'],
                   ':release_date' => $movie['release_date'],
-                  ':vote average' => $movie['vote_average'] 
+                  ':vote_average' => $movie['vote_average'] 
               ]);
 
               echo "Inserted movie: " . $movie['title'] . PHP_EOL;

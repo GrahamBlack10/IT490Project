@@ -37,3 +37,4 @@ echo "Data collection process is completed"
 # grep cron /var/log/syslog
 # If works, check cron one more time
 # crontab -l
+# verify execution: grep CRON /var/log/syslog

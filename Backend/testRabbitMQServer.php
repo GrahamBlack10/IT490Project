@@ -167,39 +167,170 @@ function getUsername($session_id) {
   return null;
 }
 
-function getMovies($filter) {
+function getMovies() {
   // Will need this once we have data in the Movies table
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Movies";
+    $stmt = $pdo-> prepare($movie);
+    $stmt->execute ([
+      
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      return "No movies can be displayed at this time.";
+    }
+
+  } catch (PDOException $e) {
+    echo "Fetch userID error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+  }
+
+
+function getMovieDetails($tmdb_id) {
+  // Will need this once we have data in the Movies table
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Movies where tmdb_id = :tmdbID";
+    $stmt = $pdo->prepare($movie);
+    $stmt->execute ([
+      ':tmdbID' => $tmdb_id
+    ]);
+    if ($stmt->rowCount() > 0) { //Checks if rows are returned first and then fetches the AA
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } else{
+      return "No movie Details available";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
 }
 
-function getMovieDetails($movie_id) {
-  // Will need this once we have data in the Movies table
+function createMovieReview($session_id, $movie_id, $rating, $review) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Movie_Reviews (movie_id, rating, review, user) 
+              VALUES (:movie_id, :rating, :review, :user)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':movie_id' => $movie_id,
+        ':rating' => $rating,
+        ':review' => $review,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Movie review created" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return "Review created";
+}
+
+function getMovieReviews($movie_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT * FROM Movie_Reviews WHERE movie_id = :movie_id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      ':movie_id' => $movie_id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      echo "Returned all movie reviews" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
+}
+
+function getAverageRating($movie_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $query = "SELECT AVG(rating) as average_rating FROM Movie_Reviews WHERE movie_id = :movie_id";
+    $stmt = $pdo->prepare($query);
+    $r = $stmt->execute([
+      ':movie_id' => $movie_id,
+    ]);
+
+    if ($r) {
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      var_dump($result);
+      echo "Returned average rating for $movie_id" . PHP_EOL;
+      return $result;
+    }
+    
+    else {
+      echo "what the fuck" . PHP_EOL;
+    }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'error';
+  }
 }
 
 function populateDatabase($data) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      
-      $query = "INSERT INTO Movies (imdb_id, title, description, image, releaseDate, genre) 
-                VALUES (:imdb_id, :title, :description, :image, :release_date, :genre)";
-      
-      $stmt = $pdo->prepare($query);
-      $stmt->execute([
-          ':imdb_id' => $data['imdbID'],
-          ':title' => $data['Title'],
-          ':description' => $data['Plot'],
-          ':image' => $data['Poster'],
-          ':release_date' => $data['Released'],
-          ':genre' => $data['Genre']
 
-
-      ]);
+      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average) 
+                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average)";
       
-      echo "Inserted movie: " . $data['Title'] . PHP_EOL;
+      // Loop through each movie in the data
+      foreach ($data ['results']as $movie) {
+          // Check for duplicates (based on tmdb_id)
+          $checkQuery = "SELECT COUNT(*) FROM Movies WHERE tmdb_id = :tmdb_id";
+          $stmt = $pdo->prepare($checkQuery);
+          $stmt->execute([':tmdb_id' => $movie['id']]);
+          $count = $stmt->fetchColumn();
+
+          if ($count == 0) {
+              // If no duplicate, insert the movie
+              $stmt = $pdo->prepare($query);
+              $stmt->execute([
+                  ':tmdb_id' => $movie['id'],
+                  ':title' => $movie['title'],
+                  ':description' => $movie['overview'],
+                  ':image' => $movie['poster_path'],
+                  ':release_date' => $movie['release_date'],
+                  ':vote_average' => $movie['vote_average'] 
+              ]);
+
+              echo "Inserted movie: " . $movie['title'] . PHP_EOL;
+          } else {
+              echo "Duplicate movie skipped: " . $movie['title'] . PHP_EOL;
+          }
+      }
+
   } catch (PDOException $e) {
       echo "Database error: " . $e->getMessage() . PHP_EOL;
   }
-  
+
   $pdo = null;
   return "success";
 }
@@ -347,11 +478,15 @@ function requestProcessor($request)
     case "populate_database":
       return populateDatabase($request['data']);
     case "get_movies":
-      return getMovies($request["filter"]);
+      return getMovies();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
-    case "get_user_id":
-      return getUserID($request['session_id']);
+    case "create_movie_review":
+      return createMovieReview($request['session_id'], $request['movie_id'], $request['rating'], $request['review']);
+    case "get_movie_reviews":
+      return getMovieReviews($request['movie_id']);
+    case "get_average_rating":
+      return getAverageRating($request['movie_id']);
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

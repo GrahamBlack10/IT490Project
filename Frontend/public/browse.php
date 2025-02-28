@@ -2,9 +2,7 @@
 include __DIR__ . "/../partials/header.php";
 include __DIR__ . "/../partials/nav.php"; 
 include __DIR__ . "/../lib/functions.php";
-require_once(__DIR__ . '/../rabbitmq/path.inc');
-require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
-require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
+
 
 
 // Redirect users who are not logged in
@@ -13,27 +11,40 @@ if (!is_logged_in()) {
     exit();
 }
 
-// Process search query if provided
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Retrieve movies (this function will later connect to your database/API)
+// Retrieve movies using your getMovies() function
 $movies = getMovies();
 
-// Filter movies based on the search query
+if (!is_array($movies)) {
+    $movies = [];
+    $errorMessage = "No movies can be displayed at this time.";
+}
+
+$tmdb_id = (int)$_GET['tmdb_id'];
+$request = array();
+$request["type"] = "get_movie_details";
+$request["movie_id"] = $tmdb_id;
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
+
+
+// Filter movies if a search term is provided
+
 if ($searchQuery !== '') {
     $movies = array_filter($movies, function($movie) use ($searchQuery) {
         return stripos($movie['title'], $searchQuery) !== false;
     });
 }
 
-// Fallback: if no movies are found, provide a default card
-if (!$movies) {
+// Fallback: if no movies are returned after filtering, use a default card
+if (empty($movies)) {
     $movies = [
         [
-            "title"  => "No movies found",
-            "image"  => "https://via.placeholder.com/300x450?text=No+Image",
-            "rating" => 0,
-            "id"     => "none"
+            "title"        => "No movies found",
+            "image"        => "https://via.placeholder.com/300x450?text=No+Image",
+            "release_date" => "N/A",
+            "id"           => "none"
         ]
     ];
 }
@@ -112,40 +123,36 @@ if (!$movies) {
 </style>
 
 <body>
-    <main class="browse-container">
+    <div class="container py-5">
         <!-- Search/Filter Section -->
-        <section class="search-filter">
-            <form method="GET" action="browse.php">
-                <input type="text" name="search" placeholder="Search movies..." value="<?= htmlspecialchars($searchQuery) ?>">
-                <button type="submit">Search</button>
-            </form>
-        </section>
+        <div class="row mb-4">
+            <div class="col-md-8 offset-md-2">
+                <form method="GET" action="browse.php" class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search movies..." value="<?= htmlspecialchars($searchQuery) ?>">
+                    <button class="btn btn-danger" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
         
         <!-- Movies Grid Section -->
-        <section class="movie-grid">
+        <div class="row">
             <?php foreach($movies as $movie): ?>
-                <div class="card">
-                    <div class="image">
-                        <img src="<?= htmlspecialchars($movie['image']) ?>" alt="<?= htmlspecialchars($movie['title']) ?>">
-                    </div>
-                    <div class="caption">
-                        <h3 class="movie_name"><?= htmlspecialchars($movie['title']) ?></h3>
-                        <div class="rate">
-                            <?php 
-                                // Display star icons based on the movie rating.
-                                for ($i = 0; $i < (int)$movie['rating']; $i++): 
-                            ?>
-                                <i class="fas fa-star"></i>
-                            <?php endfor; ?>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="https://image.tmdb.org/t/p/w500<?= htmlspecialchars($movie['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($movie['title']) ?>">
+                        <div class="card-body">
+                            <h5 class="card-title"><?= htmlspecialchars($movie['title']) ?></h5>
+                            <p class="card-text">Release Date: <?= htmlspecialchars($movie['releaseDate']) ?></p>
                         </div>
-                        <!-- Link to a detailed movie page (to be developed later) -->
-                        <a href="movie.php?id=<?= urlencode($movie['id'] ?? $movie['title']) ?>" class="details-link">More Info</a>
+                        <div class="card-footer text-center">
+                            <a href="movie.php?tmdb_id=<?= urlencode($movie['tmdb_id']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
+                        </div>
+
                     </div>
                 </div>
             <?php endforeach; ?>
-        </section>
-    </main>
+        </div>
+    </div>
 </body>
-
 
 

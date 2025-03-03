@@ -25,15 +25,15 @@ ufw allow from 192.168.196.138 to any port 80
 ufw reject from any to any
 
 # Database: only allow RabbitMQ, reject everything else
-ufw allow from 192.168.196.37 to any port 5672
-ufw reject from any to any
+sudo ufw allow from 192.168.196.37 to any port 5672
+sudo ufw reject from any to any
 
 # Server: only allow RabbitMQ, reject everything else
 sudo ufw allow from 192.168.196.37 to any port 5672  
 sudo ufw reject from any to any
 
 # Enable UFW
-ufw enable
+sudo ufw enable
 
 # To enable firewall: sudo ufw enable
 # To disable firewall: sudo ufw disable

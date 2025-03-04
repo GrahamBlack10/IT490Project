@@ -39,6 +39,7 @@ function doLogin($username,$password,$session_id)
   }
 }
 
+
 function doRegistration($user, $password, $email)
 {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');

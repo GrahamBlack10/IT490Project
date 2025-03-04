@@ -190,8 +190,31 @@ function getMovies() {
   }
   $pdo = null;
   return null;
-  }
+}
 
+function getMoviesWithFilter($filter) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Movies WHERE title = :title";
+    $stmt = $pdo-> prepare($movie);
+    $stmt->execute ([
+      ':title' => '%$filter%'
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      return "No movies can be displayed at this time.";
+    }
+
+  } catch (PDOException $e) {
+    echo "Fetch userID error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
 
 function getMovieDetails($tmdb_id) {
   // Will need this once we have data in the Movies table
@@ -479,6 +502,8 @@ function requestProcessor($request)
       return populateDatabase($request['data']);
     case "get_movies":
       return getMovies();
+    case "get_movies_with_filter":
+      return getMoviesWithFilter($request['filter']);
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
     case "create_movie_review":

@@ -14,20 +14,13 @@ if (!is_logged_in()) {
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Retrieve movies using your getMovies() function
-$movies = getMovies();
-
-if (!is_array($movies)) {
-    $movies = [];
-    $errorMessage = "No movies can be displayed at this time.";
+if (!isset($_GET['filter'])) {
+    $movies = getMovies();
 }
 
-$tmdb_id = (int)$_GET['tmdb_id'];
-$request = array();
-$request["type"] = "get_movie_details";
-$request["movie_id"] = $tmdb_id;
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
-
+else if (isset($_GET['filter'])){
+    $movies = getMoviesWithFilter($_GET['filter']);
+}
 
 // Filter movies if a search term is provided
 
@@ -37,17 +30,6 @@ if ($searchQuery !== '') {
     });
 }
 
-// Fallback: if no movies are returned after filtering, use a default card
-if (empty($movies)) {
-    $movies = [
-        [
-            "title"        => "No movies found",
-            "image"        => "https://via.placeholder.com/300x450?text=No+Image",
-            "release_date" => "N/A",
-            "id"           => "none"
-        ]
-    ];
-}
 ?>
 
 <body>

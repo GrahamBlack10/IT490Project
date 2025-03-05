@@ -318,6 +318,76 @@ function getAverageRating($movie_id) {
   }
 }
 
+function updateFavoriteGenre($genre, $session_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $user = getUsername($session_id);
+    $query = "SELECT * FROM Favorite_Genres where username = :username";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':username' => $user,
+    ]);
+    
+    if ($stmt->rowCount() > 0) {
+      echo 'Updating favorite genre...'. PHP_EOL;
+      $query = "UPDATE Favorite_Genres SET genre = :genre WHERE username = :username";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+        ':genre' => $genre,
+        ':username' => $user
+      ]);
+      echo 'Favorite genre has been updated!' . PHP_EOL;
+      return 'Favorite genre updated';
+    }
+
+    else {
+      echo 'Creating favorite genre...'. PHP_EOL;
+      $query = "INSERT INTO Favorite_Genres (username, genre) 
+                VALUES (:username, :genre)";
+
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':username' => $user,
+          ':genre' => $genre   
+      ]);
+      echo 'Favorite genre has been created!'. PHP_EOL;
+      return 'Favorite genre created';
+    }
+
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'WHAT THE FUCK';
+  }
+}
+
+function getFavoriteGenre($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $user = getUsername($session_id);
+    $movie = "SELECT genre FROM Favorite_Genres where username = :username";
+    $stmt = $pdo->prepare($movie);
+    $stmt->execute ([
+      ':username' => $user
+    ]);
+    if ($stmt->rowCount() == 0) { 
+      return 'No genre found';
+    } else{
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    }
+  } catch (PDOException $e) {
+      echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return null;
+}
+
 function populateDatabase($data) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
@@ -436,7 +506,6 @@ function getForums() {
 
     if ($r) {
       $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      var_dump($result);
       echo "Returned all forum titles and descriptions" . PHP_EOL;
       return $result;
     }
@@ -556,6 +625,10 @@ function requestProcessor($request)
       return getMovieReviews($request['movie_id']);
     case "get_average_rating":
       return getAverageRating($request['movie_id']);
+    case "update_favorite_genre":
+      return updateFavoriteGenre($request['genre'], $request['session_id']);
+    case "get_favorite_genre":
+      return getFavoriteGenre($request['session_id']);  
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

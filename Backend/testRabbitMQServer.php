@@ -76,25 +76,26 @@ function doRegistration($user, $password, $email)
 }
 
 function createSession($id, $user, $session_id) {
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
-  $query = "INSERT INTO Sessions (session_id,user_id,username) VALUES ('$session_id','$id','$user')";
-    
-    if ($mydb->errno != 0) {
-      echo "failed to execute query:".PHP_EOL;
-      echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
-      return "failure";
-    }
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    if ($mydb->query($query) === TRUE) {
+      $query = "INSERT INTO Sessions (session_id, user_id, username) VALUES (:session_id, :user_id, :username)";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':session_id' => $session_id,
+          ':user_id' => $id,
+          ':username' => $user
+      ]);
+
+      $pdo = null;
       return "success";
-    }
-
-    else {
-      echo "session could not be created" . PHP_EOL;
-      echo "-------------------" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Failed to create session: " . $e->getMessage() . PHP_EOL;
       return "failure";
-    }
+  }
 }
+
 
 function verifySession($session_id) {
   $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');

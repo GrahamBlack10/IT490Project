@@ -322,11 +322,11 @@ function populateDatabase($data) {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average) 
-                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average)";
+      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average, genre_ids) 
+                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average, :genre_ids)";
       
       // Loop through each movie in the data
-      foreach ($data ['results']as $movie) {
+      foreach ($data['results'] as $movie) {
           // Check for duplicates (based on tmdb_id)
           $checkQuery = "SELECT COUNT(*) FROM Movies WHERE tmdb_id = :tmdb_id";
           $stmt = $pdo->prepare($checkQuery);
@@ -334,6 +334,20 @@ function populateDatabase($data) {
           $count = $stmt->fetchColumn();
 
           if ($count == 0) {
+              // Map genre ids to genre names
+              $genreNames = [];
+              foreach ($movie['genre_ids'] as $genreId) {
+                  $genreName = getGenreNameById($genreId);
+                  if ($genreName) {
+                      $genreNames[] = $genreName;
+                  } else {
+                      echo "Genre ID $genreId not found. Skipping.\n";
+                  }
+              }
+
+              // Join the genre names into a string
+              $genreNamesString = implode(', ', $genreNames);
+
               // If no duplicate, insert the movie
               $stmt = $pdo->prepare($query);
               $stmt->execute([
@@ -342,10 +356,11 @@ function populateDatabase($data) {
                   ':description' => $movie['overview'],
                   ':image' => $movie['poster_path'],
                   ':release_date' => $movie['release_date'],
-                  ':vote_average' => $movie['vote_average'] 
+                  ':vote_average' => $movie['vote_average'],
+                  ':genre_ids' => $genreNamesString // Store genre names as a string
               ]);
 
-              echo "Inserted movie: " . $movie['title'] . PHP_EOL;
+              echo "Inserted movie: " . $movie['title'] . " with genres: " . $genreNamesString . PHP_EOL;
           } else {
               echo "Duplicate movie skipped: " . $movie['title'] . PHP_EOL;
           }
@@ -358,6 +373,33 @@ function populateDatabase($data) {
   $pdo = null;
   return "success";
 }
+
+function getGenreNameById($genreId) {
+  $genreNames = [
+      28 => "Action",
+      12 => "Adventure",
+      16 => "Animation",
+      35 => "Comedy",
+      80 => "Crime",
+      99 => "Documentary",
+      18 => "Drama",
+      10751 => "Family",
+      14 => "Fantasy",
+      36 => "History",
+      27 => "Horror",
+      10402 => "Music",
+      9648 => "Mystery",
+      53 => "Thriller",    
+      878 => "Science Fiction",  
+      10752 => "War",    
+      10749 => "Romance",  
+     
+  ];
+
+  return $genreNames[$genreId] ?? null;  // Return the genre name or null if not found
+}
+
+
 
 function createForum($title, $description, $session_id) {
   try {

@@ -8,8 +8,7 @@ sudo ~/git/IT490Project/Backend/testRabbitMQServer.php &
 sleep 5
 
 #Run Data Collection
-echo "Running sample API..."
-php ~/git/IT490Project/DMZ/sampleAPI.php
+echo "Running API..."
 php ~/git/IT490Project/DMZ/genreAPI.php
 
 #Stop Rabbit Server from Running

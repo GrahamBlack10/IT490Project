@@ -98,30 +98,33 @@ function createSession($id, $user, $session_id) {
 
 
 function verifySession($session_id) {
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-    return "failure";
+      $query = "SELECT session_id FROM Sessions WHERE session_id = :sessionID";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':sessionID' => $session_id
+      ]);
+
+      if ($stmt->rowCount() == 0) {
+          echo "Session not found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      } else {
+          echo "Session found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "success";
+      }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
 
-  echo "successfully connected to database".PHP_EOL;
-
-  $query = "SELECT session_id FROM Sessions WHERE session_id='$session_id'";
-  $result = $mydb->query($query);
-
-  if ($result->num_rows == 0) {
-    echo "session not found" . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "failure";
-  }
-  else {
-    echo "session found" . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
+  $pdo = null; 
 }
+
 
 function getUserID($session_id) {
   try{

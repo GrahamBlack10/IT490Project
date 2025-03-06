@@ -39,7 +39,6 @@ function doLogin($username,$password,$session_id)
   }
 }
 
-
 function doRegistration($user, $password, $email) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
@@ -82,7 +81,6 @@ function createSession($id, $user, $session_id) {
   }
 }
 
-
 function verifySession($session_id) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
@@ -109,7 +107,6 @@ function verifySession($session_id) {
   }
 
 }
-
 
 function getUserID($session_id) {
   try{
@@ -486,8 +483,6 @@ function getGenreNameById($genreId) {
 
   return $genreNames[$genreId] ?? null;  // Return the genre name or null if not found
 }
-
-
 
 function createForum($title, $description, $session_id) {
   try {

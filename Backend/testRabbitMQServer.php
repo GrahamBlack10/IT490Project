@@ -40,39 +40,26 @@ function doLogin($username,$password,$session_id)
 }
 
 
-function doRegistration($user, $password, $email)
-{
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+function doRegistration($user, $password, $email) {
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-          echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-          return "failure";
+      $query = "INSERT INTO Users (username, password, email) VALUES (:username, :password, :email)";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':username' => $user,
+          ':password' => $password, 
+          ':email' => $email
+      ]);
+
+      echo "$user registered successfully." . PHP_EOL;
+      return "success";
+  } catch (PDOException $e) {
+      echo "registration failed: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
-
-  echo "successfully connected to database".PHP_EOL;
-
-  $query = "INSERT INTO Users (username,password,email) VALUES ('$user','$password','$email')";
-
-  if ($mydb->errno != 0)
-  {
-    echo "failed to execute query:".PHP_EOL;
-    echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
-    return "failure";
-  }
-
-  if ($mydb->query($query) === TRUE)
-  {
-    echo "$user registered successfully." . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
-
-  else 
-  {
-    echo "Query failed";
-    return "failure";
-  }
+  $pdo = null;
 }
 
 function createSession($id, $user, $session_id) {

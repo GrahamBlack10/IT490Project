@@ -10,6 +10,7 @@ sleep 5
 #Run Data Collection
 echo "Running sample API..."
 php ~/git/IT490Project/DMZ/sampleAPI.php
+php ~/git/IT490Project/DMZ/genreAPI.php
 
 #Stop Rabbit Server from Running
 kill $RABBITMQ_PID

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS `Favorite_Genres` (
+	`username` VARCHAR(100) NOT NULL UNIQUE,
+    `genre` VARCHAR(20) NOT NULL
+)
+;

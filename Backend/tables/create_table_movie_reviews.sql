@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS `Movie_Reviews`(
     `review` VARCHAR(500) ,
     `user` VARCHAR(25) , 
     `created`    timestamp default current_timestamp,
-    `modified`   timestamp default current_timestamp on update current_timestamp
-)
+    `modified`   timestamp default current_timestamp on update current_timestamp,
+    FOREIGN KEY(movie_id) REFERENCES Movies(tmdb_id)
+);

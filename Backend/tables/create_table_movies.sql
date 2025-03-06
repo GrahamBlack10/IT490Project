@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS `Movies`(
     `image` TEXT,
     `description` TEXT,
     `vote_average` FLOAT,
+    `genre_ids` TEXT,
     `created`    timestamp default current_timestamp,
     `modified`   timestamp default current_timestamp on update current_timestamp
 );

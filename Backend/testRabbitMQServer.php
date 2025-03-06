@@ -39,86 +39,73 @@ function doLogin($username,$password,$session_id)
   }
 }
 
-function doRegistration($user, $password, $email)
-{
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+function doRegistration($user, $password, $email) {
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-          echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-          return "failure";
-  }
+      $query = "INSERT INTO Users (username, password, email) VALUES (:username, :password, :email)";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':username' => $user,
+          ':password' => $password, 
+          ':email' => $email
+      ]);
 
-  echo "successfully connected to database".PHP_EOL;
-
-  $query = "INSERT INTO Users (username,password,email) VALUES ('$user','$password','$email')";
-
-  if ($mydb->errno != 0)
-  {
-    echo "failed to execute query:".PHP_EOL;
-    echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
-    return "failure";
-  }
-
-  if ($mydb->query($query) === TRUE)
-  {
-    echo "$user registered successfully." . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
-
-  else 
-  {
-    echo "Query failed";
-    return "failure";
+      echo "$user registered successfully." . PHP_EOL;
+      return "success";
+  } catch (PDOException $e) {
+      echo "registration failed: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
 }
 
 function createSession($id, $user, $session_id) {
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
-  $query = "INSERT INTO Sessions (session_id,user_id,username) VALUES ('$session_id','$id','$user')";
-    
-    if ($mydb->errno != 0) {
-      echo "failed to execute query:".PHP_EOL;
-      echo __FILE__.':'.__LINE__.":error: ".$mydb->error.PHP_EOL;
-      return "failure";
-    }
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    if ($mydb->query($query) === TRUE) {
+      $query = "INSERT INTO Sessions (session_id, user_id, username) VALUES (:session_id, :user_id, :username)";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':session_id' => $session_id,
+          ':user_id' => $id,
+          ':username' => $user
+      ]);
+
+      $pdo = null;
       return "success";
-    }
-
-    else {
-      echo "session could not be created" . PHP_EOL;
-      echo "-------------------" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Failed to create session: " . $e->getMessage() . PHP_EOL;
       return "failure";
-    }
+  }
 }
 
 function verifySession($session_id) {
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-    return "failure";
+      $query = "SELECT session_id FROM Sessions WHERE session_id = :sessionID";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':sessionID' => $session_id
+      ]);
+
+      if ($stmt->rowCount() == 0) {
+          echo "Session not found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      } else {
+          echo "Session found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "success";
+      }
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
 
-  echo "successfully connected to database".PHP_EOL;
-
-  $query = "SELECT session_id FROM Sessions WHERE session_id='$session_id'";
-  $result = $mydb->query($query);
-
-  if ($result->num_rows == 0) {
-    echo "session not found" . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "failure";
-  }
-  else {
-    echo "session found" . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
 }
 
 function getUserID($session_id) {
@@ -210,7 +197,7 @@ function getMoviesWithFilter($filter) {
     }
 
   } catch (PDOException $e) {
-    echo "Fetch userID error:" . $e->getMessage() . PHP_EOL;
+    echo "Fetch movies error:" . $e->getMessage() . PHP_EOL;
   }
   $pdo = null;
   return null;
@@ -316,16 +303,115 @@ function getAverageRating($movie_id) {
   }
 }
 
+function updateFavoriteGenre($genre, $session_id) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $user = getUsername($session_id);
+    $query = "SELECT * FROM Favorite_Genres where username = :username";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':username' => $user,
+    ]);
+    
+    if ($stmt->rowCount() > 0) {
+      echo 'Updating favorite genre...'. PHP_EOL;
+      $query = "UPDATE Favorite_Genres SET genre = :genre WHERE username = :username";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+        ':genre' => $genre,
+        ':username' => $user
+      ]);
+      echo 'Favorite genre has been updated!' . PHP_EOL;
+      return 'Favorite genre updated';
+    }
+
+    else {
+      echo 'Creating favorite genre...'. PHP_EOL;
+      $query = "INSERT INTO Favorite_Genres (username, genre) 
+                VALUES (:username, :genre)";
+
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+          ':username' => $user,
+          ':genre' => $genre   
+      ]);
+      echo 'Favorite genre has been created!'. PHP_EOL;
+      return 'Favorite genre created';
+    }
+
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+      return 'WHAT THE FUCK';
+  }
+}
+
+function getFavoriteGenre($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $user = getUsername($session_id);
+    $movie = "SELECT genre FROM Favorite_Genres where username = :username";
+    $stmt = $pdo->prepare($movie);
+    $stmt->execute ([
+      ':username' => $user
+    ]);
+    if ($stmt->rowCount() == 0) { 
+      return 'No genre found';
+    } else{
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    }
+  } catch (PDOException $e) {
+      echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return null;
+}
+
+function getRecommendations($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $genre = getFavoriteGenre($session_id)['genre'];
+    $param = '%'.$genre.'%';
+    echo 'Finding movies for ' . $genre . PHP_EOL;
+    $query = "SELECT tmdb_id,image FROM Movies WHERE genre_ids LIKE :genre LIMIT 3";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute ([
+      ':genre' => $param
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      echo 'Could not find any movies for ' . $genre . PHP_EOL;
+      return "No movies can be displayed at this time.";
+    }
+    
+  } catch (PDOException $e) {
+      echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return null;
+}
+
 function populateDatabase($data) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average) 
-                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average)";
+      $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average, genre_ids) 
+                VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average, :genre_ids)";
       
       // Loop through each movie in the data
-      foreach ($data ['results']as $movie) {
+      foreach ($data['results'] as $movie) {
           // Check for duplicates (based on tmdb_id)
           $checkQuery = "SELECT COUNT(*) FROM Movies WHERE tmdb_id = :tmdb_id";
           $stmt = $pdo->prepare($checkQuery);
@@ -333,6 +419,20 @@ function populateDatabase($data) {
           $count = $stmt->fetchColumn();
 
           if ($count == 0) {
+              // Map genre ids to genre names
+              $genreNames = [];
+              foreach ($movie['genre_ids'] as $genreId) {
+                  $genreName = getGenreNameById($genreId);
+                  if ($genreName) {
+                      $genreNames[] = $genreName;
+                  } else {
+                      echo "Genre ID $genreId not found. Skipping.\n";
+                  }
+              }
+
+              // Join the genre names into a string
+              $genreNamesString = implode(', ', $genreNames);
+
               // If no duplicate, insert the movie
               $stmt = $pdo->prepare($query);
               $stmt->execute([
@@ -341,10 +441,11 @@ function populateDatabase($data) {
                   ':description' => $movie['overview'],
                   ':image' => $movie['poster_path'],
                   ':release_date' => $movie['release_date'],
-                  ':vote_average' => $movie['vote_average'] 
+                  ':vote_average' => $movie['vote_average'],
+                  ':genre_ids' => $genreNamesString // Store genre names as a string
               ]);
 
-              echo "Inserted movie: " . $movie['title'] . PHP_EOL;
+              echo "Inserted movie: " . $movie['title'] . " with genres: " . $genreNamesString . PHP_EOL;
           } else {
               echo "Duplicate movie skipped: " . $movie['title'] . PHP_EOL;
           }
@@ -356,6 +457,31 @@ function populateDatabase($data) {
 
   $pdo = null;
   return "success";
+}
+
+function getGenreNameById($genreId) {
+  $genreNames = [
+      28 => "Action",
+      12 => "Adventure",
+      16 => "Animation",
+      35 => "Comedy",
+      80 => "Crime",
+      99 => "Documentary",
+      18 => "Drama",
+      10751 => "Family",
+      14 => "Fantasy",
+      36 => "History",
+      27 => "Horror",
+      10402 => "Music",
+      9648 => "Mystery",
+      53 => "Thriller",    
+      878 => "Science Fiction",  
+      10752 => "War",    
+      10749 => "Romance",  
+     
+  ];
+
+  return $genreNames[$genreId] ?? null;  // Return the genre name or null if not found
 }
 
 function createForum($title, $description, $session_id) {
@@ -392,7 +518,6 @@ function getForums() {
 
     if ($r) {
       $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      var_dump($result);
       echo "Returned all forum titles and descriptions" . PHP_EOL;
       return $result;
     }
@@ -512,6 +637,12 @@ function requestProcessor($request)
       return getMovieReviews($request['movie_id']);
     case "get_average_rating":
       return getAverageRating($request['movie_id']);
+    case "update_favorite_genre":
+      return updateFavoriteGenre($request['genre'], $request['session_id']);
+    case "get_favorite_genre":
+      return getFavoriteGenre($request['session_id']);  
+    case "get_recommendations":
+      return getRecommendations($request['session_id']);  
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

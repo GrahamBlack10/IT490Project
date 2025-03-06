@@ -4,39 +4,38 @@ require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
-function doLogin($username,$password,$session_id)
-{
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+function doLogin($username, $password, $session_id) {
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-    return "failure";
-  }
+      $query = "SELECT id, username, password FROM Users WHERE username = :username";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([':username' => $username]);
 
-  echo "successfully connected to database".PHP_EOL;
+      if ($stmt->rowCount() == 0) {
+          echo "Username not found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      }
+      $user = $stmt->fetch(PDO::FETCH_ASSOC);
+      if (password_verify($password, $user["password"])) {
+          echo 'User and password found in database' . PHP_EOL;
 
-  $query = "SELECT id,username,password FROM Users WHERE username='$username'";
-  $result = $mydb->query($query);
-  if ($result->num_rows == 0) {
-    echo "Username not found";
-    echo "-------------------" . PHP_EOL;
-    return "failure";
+          createSession($user['id'], $user['username'], $session_id);
+          echo 'Session created, ' . $username . ' has logged in' . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "success";
+      } else {
+          echo 'Password is incorrect' . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      }
+  } catch (PDOException $e) {
+      echo "Login failure: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
-  $user = mysqli_fetch_array($result);
-  if (password_verify($password, $user["password"])) {
-    echo 'user and password found in database' . PHP_EOL;
-    createSession($user['id'],$user['username'], $session_id);
-    echo 'session created,' . $username . ' has logged in' . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
-
-  else {
-    echo 'password is incorrect' . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "failure";
-  }
+  $pdo = null; 
 }
 
 function doRegistration($user, $password, $email) {

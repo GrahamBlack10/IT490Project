@@ -122,7 +122,6 @@ function verifySession($session_id) {
       return "failure";
   }
 
-  $pdo = null; 
 }
 
 

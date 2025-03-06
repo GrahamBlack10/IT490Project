@@ -212,7 +212,7 @@ function getMoviesWithFilter($filter) {
     }
 
   } catch (PDOException $e) {
-    echo "Fetch userID error:" . $e->getMessage() . PHP_EOL;
+    echo "Fetch movies error:" . $e->getMessage() . PHP_EOL;
   }
   $pdo = null;
   return null;
@@ -380,6 +380,35 @@ function getFavoriteGenre($session_id) {
       $result = $stmt->fetch(PDO::FETCH_ASSOC);
       return $result;
     }
+  } catch (PDOException $e) {
+      echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
+  }
+
+  $pdo = null;
+  return null;
+}
+
+function getRecommendations($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $genre = getFavoriteGenre($session_id)['genre'];
+    $param = '%'.$genre.'%';
+    echo 'Finding movies for ' . $genre . PHP_EOL;
+    $query = "SELECT tmdb_id,image FROM Movies WHERE genre_ids LIKE :genre LIMIT 3";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute ([
+      ':genre' => $param
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      echo 'Could not find any movies for ' . $genre . PHP_EOL;
+      return "No movies can be displayed at this time.";
+    }
+    
   } catch (PDOException $e) {
       echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
   }
@@ -629,6 +658,8 @@ function requestProcessor($request)
       return updateFavoriteGenre($request['genre'], $request['session_id']);
     case "get_favorite_genre":
       return getFavoriteGenre($request['session_id']);  
+    case "get_recommendations":
+      return getRecommendations($request['session_id']);  
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

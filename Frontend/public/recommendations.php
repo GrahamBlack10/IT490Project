@@ -12,6 +12,20 @@ $request['session_id'] = session_id();
 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 $response = $client->send_request($request);
 
-var_dump($response);
+?>
 
+<br>
+<p class="text-center">Here are some recommendations based on your favorite genre</p>
+
+<?php
+foreach($response as $movie) { ?>
+    <br>
+    <div class="card" style="width: 18rem;">
+    <img class="card-img-top" src="https://image.tmdb.org/t/p/w500<?php echo $movie['image']?>" class="img-fluid rounded">
+    <div class="card-body">
+        <a href="https://www.themoviedb.org/movie/<?php echo $movie['tmdb_id']?>" class="btn btn-primary">Check it out!</a>
+    </div>
+    </div>
+<?php
+}
 ?>

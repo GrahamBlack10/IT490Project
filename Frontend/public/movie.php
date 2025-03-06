@@ -121,6 +121,7 @@ $reviews = $client->send_request($request);
     </div>
     
     <!-- Similar Movies Section -->
+    <!--
     <div class="row">
         <div class="col-12">
             <h4>Similar Movies</h4>
@@ -146,4 +147,5 @@ $reviews = $client->send_request($request);
             </div>
         </div>
     </div>
+    -->
 </div>

@@ -59,7 +59,6 @@ function doRegistration($user, $password, $email) {
       echo "registration failed: " . $e->getMessage() . PHP_EOL;
       return "failure";
   }
-  $pdo = null;
 }
 
 function createSession($id, $user, $session_id) {

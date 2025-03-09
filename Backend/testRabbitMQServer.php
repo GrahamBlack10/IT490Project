@@ -35,7 +35,6 @@ function doLogin($username, $password, $session_id) {
       echo "Login failure: " . $e->getMessage() . PHP_EOL;
       return "failure";
   }
-  $pdo = null; 
 }
 
 function doRegistration($user, $password, $email) {
@@ -401,6 +400,51 @@ function getRecommendations($session_id) {
   return null;
 }
 
+function addToWatchlist($session_id, $tmdb_id, $image) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Watchlist (movie_id, image, user) 
+              VALUES (:movie_id, :image, :user)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':movie_id' => $tmdb_id,
+        ':image' => $image,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Added to watchlist" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+}
+
+function getWatchlist($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Watchlist WHERE user = :user";
+    $stmt = $pdo-> prepare($movie);
+    $stmt->execute ([
+      ':user' => getUsername($session_id)
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      return "Empty";
+    }
+
+  } catch (PDOException $e) {
+    echo "Fetch watchlist error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
+
 function populateDatabase($data) {
   try {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
@@ -642,6 +686,10 @@ function requestProcessor($request)
       return getFavoriteGenre($request['session_id']);  
     case "get_recommendations":
       return getRecommendations($request['session_id']);  
+    case "add_to_watchlist":
+      return addToWatchlist($request['session_id'], $request['tmdb_id'], $request['image']);
+    case "get_watchlist":
+      return getWatchlist($request['session_id']);
     case "get_username":
       return getUsername($request['session_id']);
     case "create_forum":

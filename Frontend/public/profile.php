@@ -51,4 +51,24 @@ if (isset($_POST["genre"])) {
     exit;
 }
 
+$request = array();
+$request['type'] = 'get_watchlist';
+$request['session_id'] = session_id();
+$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+$response = $client->send_request($request);
 ?>
+
+<br>
+<p class="text-center">Here is what's currently in your watchlist... </p>
+<?php
+foreach ($response as $movie) {
+?>
+
+<br>
+<div class="card" style="width: 18rem;">
+  <img class="card-img-top" src="https://image.tmdb.org/t/p/w500<?php echo $movie['image'] ?>" alt="Card image cap">
+  <div class="card-body">
+    <a href="#" class="btn btn-primary">Will work on this button on Monday</a>
+  </div>
+</div>
+<?php } ?>

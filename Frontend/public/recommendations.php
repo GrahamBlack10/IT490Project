@@ -6,6 +6,12 @@ require_once(__DIR__ . '/../rabbitmq/path.inc');
 require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
 require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 
+// Redirect users who are not logged in
+if (!is_logged_in()) {
+    header("Location: login.php");
+    exit();
+}
+
 $request = array();
 $request['type']= 'get_recommendations';
 $request['session_id'] = session_id();

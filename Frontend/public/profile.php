@@ -22,14 +22,25 @@ if ($response === 'No genre found') {
 
 
 if (isset($_POST["genre"])) {
-    $request = array();
-    $request["type"] = "update_favorite_genre";
-    $request["genre"] = $_POST["genre"];
-    $request["session_id"] = session_id();
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-    $response = $client->send_request($request);
-    header('Location: profile.php');
-    exit;
+  $request = array();
+  $request["type"] = "update_favorite_genre";
+  $request["genre"] = $_POST["genre"];
+  $request["session_id"] = session_id();
+  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+  $response = $client->send_request($request);
+  header('Location: profile.php');
+  exit;
+}
+
+if (isset($_POST["remove"])) {
+  $request = array();
+  $request["type"] = "remove_from_watchlist";
+  $request["session_id"] = session_id();
+  $request["image"] = $_POST["image"];
+  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+  $response = $client->send_request($request);
+  header('Location: profile.php');
+  exit;
 }
 
 $request = array();
@@ -81,7 +92,10 @@ $watchlist = $client->send_request($request);
                                     <h6 class="card-title"><?php echo $movie['title'] ?></h6>
                                 </div>
                                 <div class="card-footer text-center">
-                        <!--Button to be worked on Monday--><a href="" class="btn btn-primary">Details</a> 
+                                  <form action="profile.php" method="POST">
+                                    <input type="hidden" name="image" value="<?php echo $movie['image'] ?>">
+                                    <button type="submit" name="remove" class="btn btn-danger">Remove from Watchlist</a> 
+                                  </form>
                                 </div>
                             </div>
                         </div>

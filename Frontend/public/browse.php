@@ -38,6 +38,8 @@ if ($searchQuery !== '') {
             </div>
         </div>
         
+        <p class="text-center"><a href="email.php">Email a link to the best movie!</a></p>
+
         <!-- Movies Grid Section -->
         <div class="row">
             <?php foreach($movies as $movie): ?>

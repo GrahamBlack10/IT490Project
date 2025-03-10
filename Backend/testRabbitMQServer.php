@@ -152,6 +152,29 @@ function getUsername($session_id) {
   return null;
 }
 
+function getEmail($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $n = "SELECT email FROM Users where username = :username";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+      ':username' => getUsername($session_id)
+    ]);
+    if ($stmt->rowCount() > 0) { 
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['email'];
+    } else{
+      return "No email for this session";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
+
 function getMovies() {
   // Will need this once we have data in the Movies table
   try{
@@ -196,6 +219,29 @@ function getMoviesWithFilter($filter) {
 
   } catch (PDOException $e) {
     echo "Fetch movies error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
+
+function getTopMovie() {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $n = "SELECT tmdb_id FROM Movies ORDER BY vote_average DESC LIMIT 1";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+
+    ]);
+    if ($stmt->rowCount() > 0) { 
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['tmdb_id'];
+    } else{
+      return "No movie for this session";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
   }
   $pdo = null;
   return null;
@@ -416,6 +462,26 @@ function addToWatchlist($session_id, $tmdb_id, $image) {
     ]);
     
     echo "Added to watchlist" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+}
+
+function removeFromWatchList($session_id, $image) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "DELETE FROM Watchlist 
+              WHERE user = :user AND image = :image";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':image' => $image,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Deleted from watchlist" . PHP_EOL;
   } catch (PDOException $e) {
       echo "Database error: " . $e->getMessage() . PHP_EOL;
   }
@@ -672,6 +738,8 @@ function requestProcessor($request)
       return getMovies();
     case "get_movies_with_filter":
       return getMoviesWithFilter($request['filter']);
+    case "get_top_movie":
+      return getTopMovie();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
     case "create_movie_review":
@@ -688,10 +756,14 @@ function requestProcessor($request)
       return getRecommendations($request['session_id']);  
     case "add_to_watchlist":
       return addToWatchlist($request['session_id'], $request['tmdb_id'], $request['image']);
+    case "remove_from_watchlist":
+      return removeFromWatchlist($request['session_id'], $request['image']);
     case "get_watchlist":
       return getWatchlist($request['session_id']);
     case "get_username":
       return getUsername($request['session_id']);
+    case "get_email":
+      return getEmail($request['session_id']);
     case "create_forum":
       return createForum($request['title'], $request['description'], $request['session_id']);
     case "get_forums":

@@ -4,38 +4,36 @@ require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
-function doLogin($username,$password,$session_id)
-{
-  $mydb = new mysqli('127.0.0.1','testUser','12345','testdb');
+function doLogin($username, $password, $session_id) {
+  try {
+      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  if ($mydb->errno != 0)
-  {
-    echo "failed to connect to database: ". $mydb->error . PHP_EOL;
-    return "failure";
-  }
+      $query = "SELECT id, username, password FROM Users WHERE username = :username";
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([':username' => $username]);
 
-  echo "successfully connected to database".PHP_EOL;
+      if ($stmt->rowCount() == 0) {
+          echo "Username not found" . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      }
+      $user = $stmt->fetch(PDO::FETCH_ASSOC);
+      if (password_verify($password, $user["password"])) {
+          echo 'User and password found in database' . PHP_EOL;
 
-  $query = "SELECT id,username,password FROM Users WHERE username='$username'";
-  $result = $mydb->query($query);
-  if ($result->num_rows == 0) {
-    echo "Username not found";
-    echo "-------------------" . PHP_EOL;
-    return "failure";
-  }
-  $user = mysqli_fetch_array($result);
-  if (password_verify($password, $user["password"])) {
-    echo 'user and password found in database' . PHP_EOL;
-    createSession($user['id'],$user['username'], $session_id);
-    echo 'session created,' . $username . ' has logged in' . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "success";
-  }
-
-  else {
-    echo 'password is incorrect' . PHP_EOL;
-    echo "-------------------" . PHP_EOL;
-    return "failure";
+          createSession($user['id'], $user['username'], $session_id);
+          echo 'Session created, ' . $username . ' has logged in' . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "success";
+      } else {
+          echo 'Password is incorrect' . PHP_EOL;
+          echo "-------------------" . PHP_EOL;
+          return "failure";
+      }
+  } catch (PDOException $e) {
+      echo "Login failure: " . $e->getMessage() . PHP_EOL;
+      return "failure";
   }
 }
 
@@ -154,6 +152,29 @@ function getUsername($session_id) {
   return null;
 }
 
+function getEmail($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $n = "SELECT email FROM Users where username = :username";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+      ':username' => getUsername($session_id)
+    ]);
+    if ($stmt->rowCount() > 0) { 
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['email'];
+    } else{
+      return "No email for this session";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
+
 function getMovies() {
   // Will need this once we have data in the Movies table
   try{
@@ -198,6 +219,29 @@ function getMoviesWithFilter($filter) {
 
   } catch (PDOException $e) {
     echo "Fetch movies error:" . $e->getMessage() . PHP_EOL;
+  }
+  $pdo = null;
+  return null;
+}
+
+function getLatestMovie() {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $n = "SELECT tmdb_id FROM Movies ORDER BY releaseDate DESC LIMIT 1";
+    $stmt = $pdo->prepare($n);
+    $stmt->execute ([
+
+    ]);
+    if ($stmt->rowCount() > 0) { 
+      $session = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $session['tmdb_id'];
+    } else{
+      return "No movie for this session";
+    }
+  } catch (PDOException $e) {
+      echo "Fetch userID error: " . $e->getMessage() . PHP_EOL;
   }
   $pdo = null;
   return null;
@@ -398,6 +442,71 @@ function getRecommendations($session_id) {
       echo "Error getting favorite genre" . $e->getMessage() . PHP_EOL;
   }
 
+  $pdo = null;
+  return null;
+}
+
+function addToWatchlist($session_id, $tmdb_id, $image) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "INSERT INTO Watchlist (movie_id, image, user) 
+              VALUES (:movie_id, :image, :user)";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':movie_id' => $tmdb_id,
+        ':image' => $image,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Added to watchlist" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+}
+
+function removeFromWatchList($session_id, $image) {
+  try {
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $query = "DELETE FROM Watchlist 
+              WHERE user = :user AND image = :image";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([
+        ':image' => $image,
+        ':user' => getUsername($session_id)
+    ]);
+    
+    echo "Deleted from watchlist" . PHP_EOL;
+  } catch (PDOException $e) {
+      echo "Database error: " . $e->getMessage() . PHP_EOL;
+  }
+}
+
+function getWatchlist($session_id) {
+  try{
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $movie = "SELECT * FROM Watchlist WHERE user = :user";
+    $stmt = $pdo-> prepare($movie);
+    $stmt->execute ([
+      ':user' => getUsername($session_id)
+    ]);
+    if ($stmt->rowCount()>0){
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } else {
+      return "Empty";
+    }
+
+  } catch (PDOException $e) {
+    echo "Fetch watchlist error:" . $e->getMessage() . PHP_EOL;
+  }
   $pdo = null;
   return null;
 }
@@ -629,6 +738,8 @@ function requestProcessor($request)
       return getMovies();
     case "get_movies_with_filter":
       return getMoviesWithFilter($request['filter']);
+    case "get_latest_movie":
+      return getLatestMovie();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
     case "create_movie_review":
@@ -643,8 +754,16 @@ function requestProcessor($request)
       return getFavoriteGenre($request['session_id']);  
     case "get_recommendations":
       return getRecommendations($request['session_id']);  
+    case "add_to_watchlist":
+      return addToWatchlist($request['session_id'], $request['tmdb_id'], $request['image']);
+    case "remove_from_watchlist":
+      return removeFromWatchlist($request['session_id'], $request['image']);
+    case "get_watchlist":
+      return getWatchlist($request['session_id']);
     case "get_username":
       return getUsername($request['session_id']);
+    case "get_email":
+      return getEmail($request['session_id']);
     case "create_forum":
       return createForum($request['title'], $request['description'], $request['session_id']);
     case "get_forums":

@@ -23,7 +23,6 @@ $releaseDate = $response['releaseDate'];
 $summary     = $response['description'];
 $image       = $response['image'];
 
-
 $request = array();
 $request['type'] = 'get_average_rating';
 $request['movie_id'] = $tmdb_id;
@@ -33,18 +32,29 @@ $averageRating = $response['average_rating'];
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review'], $_POST['rating'])) {
-  $request = array();
-  $request['type']       = 'create_movie_review';
-  $request['movie_id']   = $tmdb_id;
-  $request['session_id'] = session_id();
-  $request['review']     = $_POST['review'];
-  $request['rating']     = $_POST['rating']; 
-  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-  $response = $client->send_request($request);
-  header('Location: movie.php?tmdb_id=' . $tmdb_id);
-  exit;
+    $request = array();
+    $request['type']       = 'create_movie_review';
+    $request['movie_id']   = $tmdb_id;
+    $request['session_id'] = session_id();
+    $request['review']     = $_POST['review'];
+    $request['rating']     = $_POST['rating']; 
+    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+    $response = $client->send_request($request);
+    header('Location: movie.php?tmdb_id=' . $tmdb_id);
+    exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['watchlist'])) {
+    $request = array();
+    $request['type'] = 'add_to_watchlist';
+    $request['session_id'] = session_id();
+    $request['image'] = $image;
+    $request['tmdb_id'] = $tmdb_id;
+    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+    $response = $client->send_request($request);
+    header('Location: movie.php?tmdb_id=' . $tmdb_id);
+    exit;
+}
 
 $request = array();
 $request['type']     = 'get_movie_reviews';
@@ -55,18 +65,20 @@ $reviews = $client->send_request($request);
 
 <div class="container py-5">
     <!-- Movie Details Section -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            
-            <img src="https://image.tmdb.org/t/p/w500<?php echo $image ?>" class="img-fluid rounded" alt="<?php echo $title ?>">
+    <form action="movie.php?tmdb_id=<?php echo $tmdb_id; ?>" method="POST">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <img src="https://image.tmdb.org/t/p/w500<?php echo $image ?>" class="img-fluid rounded" alt="<?php echo $title ?>">
+            </div>
+            <div class="col-md-8">
+                <h2><?php echo $title ?></h2>
+                <p class="text-muted">Release Date: <?php echo $releaseDate ?></p>
+                <p><strong>Average Rating:</strong> <?php echo $averageRating ?></p>
+                <p><?php echo $summary ?></p>
+                <input type="submit" name="watchlist" value="Add to watchlist" class="btn btn-primary">
+            </div>
         </div>
-        <div class="col-md-8">
-            <h2><?php echo $title ?></h2>
-            <p class="text-muted">Release Date: <?php echo $releaseDate ?></p>
-            <p><strong>Average Rating:</strong> <?php echo $averageRating ?></p>
-            <p><?php echo $summary ?></p>
-        </div>
-    </div>
+    </form>
     
     <!-- Review Submission Form -->
     <div class="row mb-4">
@@ -119,33 +131,4 @@ $reviews = $client->send_request($request);
             <?php endif; ?>
         </div>
     </div>
-    
-    <!-- Similar Movies Section -->
-    <!--
-    <div class="row">
-        <div class="col-12">
-            <h4>Similar Movies</h4>
-            <div class="row">
-                <?php 
-                   
-                    $similarMovies = getMovies();
-                    foreach($similarMovies as $movie):
-                        if ($movie['tmdb_id'] == $tmdb_id) continue;
-                ?>
-                    <div class="col-md-3 mb-4">
-                        <div class="card h-100">
-                            <img src="https://image.tmdb.org/t/p/w500<?php echo $movie['image'] ?>" class="card-img-top" alt="<?php echo $movie['title'] ?>">
-                            <div class="card-body">
-                                <h6 class="card-title"><?php echo $movie['title'] ?></h6>
-                            </div>
-                            <div class="card-footer text-center">
-                                <a href="movie.php?tmdb_id=<?php echo urlencode($movie['tmdb_id']) ?>" class="btn btn-outline-danger btn-sm">More Info</a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-    -->
 </div>

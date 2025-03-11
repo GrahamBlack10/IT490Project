@@ -224,12 +224,12 @@ function getMoviesWithFilter($filter) {
   return null;
 }
 
-function getTopMovie() {
+function getLatestMovie() {
   try{
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $n = "SELECT tmdb_id FROM Movies ORDER BY vote_average DESC LIMIT 1";
+    $n = "SELECT tmdb_id FROM Movies ORDER BY releaseDate DESC LIMIT 1";
     $stmt = $pdo->prepare($n);
     $stmt->execute ([
 
@@ -738,8 +738,8 @@ function requestProcessor($request)
       return getMovies();
     case "get_movies_with_filter":
       return getMoviesWithFilter($request['filter']);
-    case "get_top_movie":
-      return getTopMovie();
+    case "get_latest_movie":
+      return getLatestMovie();
     case "get_movie_details":
       return getMovieDetails($request['movie_id']);
     case "create_movie_review":

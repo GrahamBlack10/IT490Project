@@ -17,7 +17,7 @@ $response = $client->send_request($request);
 $email = $response;
 
 $request = array();
-$request['type'] = 'get_top_movie';
+$request['type'] = 'get_latest_movie';
 $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 $response = $client->send_request($request);
 $movie = $response;
@@ -39,7 +39,7 @@ $mail->addAddress($email, 'Recipient');
 
 // Sending plain text email
 $mail->isHTML(false); // Set email format to plain text
-$mail->Subject = 'Here is the top movie!!!';
+$mail->Subject = 'Here is the latest movie!!!';
 $mail->Body    = 'Have a look: https://www.themoviedb.org/movie/' . $movie;
 
 // Send the email

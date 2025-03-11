@@ -38,7 +38,7 @@ if ($searchQuery !== '') {
             </div>
         </div>
         
-        <p class="text-center"><a href="email.php">Email a link to the best movie!</a></p>
+        <p class="text-center"><a href="email.php">Email a link to the latest movie!</a></p>
 
         <!-- Movies Grid Section -->
         <div class="row">

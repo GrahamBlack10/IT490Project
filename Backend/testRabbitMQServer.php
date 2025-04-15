@@ -3,6 +3,7 @@
 require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
+require_once ('vendor/autoload.php'); //Twilio 
 
 function doLogin($username, $password, $session_id) {
   try {
@@ -716,6 +717,66 @@ function getForumComments($forum_id) {
   }
 }
 
+
+use Twilio\Rest\Client;
+
+function generate2fa($data)
+{
+    try {
+        // Connect to database
+        $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $userId = $data['user_id'];
+
+        // Step 1: Look up user's phone number
+        $Query = "SELECT phone FROM Users WHERE id = :id";
+        $stmt = $pdo->prepare($Query);
+        $stmt->execute(['id' => $userId]);
+        $phone = $stmt->fetchColumn();
+
+        if (!$phone) {
+            echo "User not found. Skipping.\n";
+            return ['status' => 'error', 'message' => 'User not found'];
+        }
+
+        // Step 2: Generate random 6-digit code
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 minutes from now
+
+        // Step 3: Store the code in the TwoFactorCodes table
+        $insertQuery = "INSERT INTO TwoFactorCodes (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)";
+        $stmt = $pdo->prepare($insertQuery);
+        $stmt->execute([
+            'user_id' => $userId,
+            'code' => $code,
+            'expires_at' => $expiresAt
+        ]);
+
+        // Step 4: Send SMS via Twilio
+        $sid = 'ACdec7955e135ff069772771818cf31056';
+        $token = 'ab77dcb8935afc33b9d42440d99f0c84';
+        $twilio_number = '+19369781911';
+        $client = new Client($sid, $token);
+
+        $client->messages->create($phone, [
+            'from' => $twilio_number,
+            'body' => "Your 2FA code is: $code"
+        ]);
+
+        echo "2FA code sent to user ID $userId ($phone).\n";
+        return ['status' => 'success', 'message' => '2FA code sent'];
+
+    } catch (PDOException $e) {
+        echo "Database error: " . $e->getMessage() . PHP_EOL;
+        return ['status' => 'error', 'message' => 'Database error'];
+    } catch (Exception $e) {
+        echo "SMS send error: " . $e->getMessage() . PHP_EOL;
+        return ['status' => 'error', 'message' => 'SMS send failed'];
+    }
+}
+
+
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -774,6 +835,8 @@ function requestProcessor($request)
       return createForumComment($request['comment'], $request['forum_id'], $request['session_id']);
     case "get_forum_comments":
       return getForumComments($request['forum_id']);
+    case "generate_2fa":
+      return generate2fa($request);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

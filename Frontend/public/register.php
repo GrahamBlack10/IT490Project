@@ -57,8 +57,7 @@ if (is_logged_in()) {
                 $request['user'] = $user;
                 $request['password'] = $hash;
                 $request['email'] = $email;
-                $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-                $response = $client->send_request($request);
+                $response = rabbitConnect($request);
                 print_r($response);
                 if($response === 'success') {
                     "<script type='text/javascript'>alert('Resgistration successful!');</script>";

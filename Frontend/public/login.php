@@ -36,8 +36,8 @@ if (is_logged_in()) {
         $request['user'] = $user;
         $request['password'] = $password;
         $request['session_id'] = session_id();
-        $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-        $response = $client->send_request($request);
+        $response = rabbitConnect($request);
+        
         if ($response === 'success') {
             die(header("Location: profile.php"));
         }
@@ -45,8 +45,26 @@ if (is_logged_in()) {
         else {
             echo $response . 'Login failed, please try again';
         }
+
+        
     }
 
+    if ($fp = @fsockopen("192.168.196.86" , 5672)) {
+        echo "192.168.196.86 is reachable!";
+    }
+
+    else {
+        echo "Cannot reach 192.168.196.86...\n";
+    }
+
+    if ($fp = @fsockopen("192.168.196.229" , 5672)) {
+        echo "192.168.196.229 is reachable!";
+    }
+
+    else {
+        echo "Cannot reach 192.168.196.229...\n";
+    }
+    
 ?>
 
 <?php include __DIR__ . "/../partials/footer.php"; ?>

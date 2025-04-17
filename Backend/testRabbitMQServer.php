@@ -5,10 +5,30 @@ require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 require_once ('vendor/autoload.php'); //Twilio 
 
+$hosts = ['192.168.196.26', '192.168.196.138']; // Add more IPs if needed
+
+// Centralized PDO connection function
+function getPDO() {
+    global $hosts;
+    foreach ($hosts as $host) {
+        try {
+            $pdo = new PDO("mysql:host=$host;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $pdo; // Return the first successful connection
+        } catch (PDOException $e) {
+            echo "Connection to $host failed: " . $e->getMessage() . PHP_EOL;
+        }
+    }
+    echo "All database connection attempts failed." . PHP_EOL;
+    return null; // If no connections are successful
+}
+
 function doLogin($username, $password, $session_id) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $pdo = getPDO(); // Use the centralized PDO function
+      if (!$pdo) {
+          return "failure"; // If connection fails
+      }
 
       $query = "SELECT id, username, password FROM Users WHERE username = :username";
       $stmt = $pdo->prepare($query);
@@ -40,8 +60,10 @@ function doLogin($username, $password, $session_id) {
 
 function doRegistration($user, $password, $email) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $pdo = getPDO(); // Use the centralized PDO function
+      if (!$pdo) {
+          return "failure"; // If connection fails
+      }
 
       $query = "INSERT INTO Users (username, password, email) VALUES (:username, :password, :email)";
       $stmt = $pdo->prepare($query);
@@ -54,15 +76,17 @@ function doRegistration($user, $password, $email) {
       echo "$user registered successfully." . PHP_EOL;
       return "success";
   } catch (PDOException $e) {
-      echo "registration failed: " . $e->getMessage() . PHP_EOL;
+      echo "Registration failed: " . $e->getMessage() . PHP_EOL;
       return "failure";
   }
 }
 
 function createSession($id, $user, $session_id) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $pdo = getPDO(); // Use the centralized PDO function
+      if (!$pdo) {
+          return "failure"; // If connection fails
+      }
 
       $query = "INSERT INTO Sessions (session_id, user_id, username) VALUES (:session_id, :user_id, :username)";
       $stmt = $pdo->prepare($query);
@@ -72,7 +96,6 @@ function createSession($id, $user, $session_id) {
           ':username' => $user
       ]);
 
-      $pdo = null;
       return "success";
   } catch (PDOException $e) {
       echo "Failed to create session: " . $e->getMessage() . PHP_EOL;
@@ -82,8 +105,10 @@ function createSession($id, $user, $session_id) {
 
 function verifySession($session_id) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
       $query = "SELECT session_id FROM Sessions WHERE session_id = :sessionID";
       $stmt = $pdo->prepare($query);
@@ -109,8 +134,10 @@ function verifySession($session_id) {
 
 function getUserID($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $n = "SELECT user_id FROM Sessions where session_id = :sessionID";
     $stmt = $pdo->prepare($n);
@@ -132,8 +159,10 @@ function getUserID($session_id) {
 
 function getUsername($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $n = "SELECT username FROM Sessions where session_id = :sessionID";
     $stmt = $pdo->prepare($n);
@@ -155,8 +184,10 @@ function getUsername($session_id) {
 
 function getEmail($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $n = "SELECT email FROM Users where username = :username";
     $stmt = $pdo->prepare($n);
@@ -179,8 +210,10 @@ function getEmail($session_id) {
 function getMovies() {
   // Will need this once we have data in the Movies table
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $movie = "SELECT * FROM Movies";
     $stmt = $pdo-> prepare($movie);
@@ -203,8 +236,10 @@ function getMovies() {
 
 function getMoviesWithFilter($filter) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $movie = "SELECT * FROM Movies WHERE title = :title";
     $stmt = $pdo-> prepare($movie);
@@ -227,9 +262,11 @@ function getMoviesWithFilter($filter) {
 
 function getLatestMovie() {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+    
     $n = "SELECT tmdb_id FROM Movies ORDER BY releaseDate DESC LIMIT 1";
     $stmt = $pdo->prepare($n);
     $stmt->execute ([
@@ -251,8 +288,10 @@ function getLatestMovie() {
 function getMovieDetails($tmdb_id) {
   // Will need this once we have data in the Movies table
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $movie = "SELECT * FROM Movies where tmdb_id = :tmdbID";
     $stmt = $pdo->prepare($movie);
@@ -274,8 +313,10 @@ function getMovieDetails($tmdb_id) {
 
 function createMovieReview($session_id, $movie_id, $rating, $review) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $query = "INSERT INTO Movie_Reviews (movie_id, rating, review, user) 
               VALUES (:movie_id, :rating, :review, :user)";
@@ -299,8 +340,11 @@ function createMovieReview($session_id, $movie_id, $rating, $review) {
 
 function getMovieReviews($movie_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+
     $query = "SELECT * FROM Movie_Reviews WHERE movie_id = :movie_id";
     $stmt = $pdo->prepare($query);
     $r = $stmt->execute([
@@ -324,8 +368,11 @@ function getMovieReviews($movie_id) {
 
 function getAverageRating($movie_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+
     $query = "SELECT AVG(rating) as average_rating FROM Movie_Reviews WHERE movie_id = :movie_id";
     $stmt = $pdo->prepare($query);
     $r = $stmt->execute([
@@ -350,8 +397,10 @@ function getAverageRating($movie_id) {
 
 function updateFavoriteGenre($genre, $session_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $user = getUsername($session_id);
     $query = "SELECT * FROM Favorite_Genres where username = :username";
@@ -395,8 +444,10 @@ function updateFavoriteGenre($genre, $session_id) {
 
 function getFavoriteGenre($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $user = getUsername($session_id);
     $movie = "SELECT genre FROM Favorite_Genres where username = :username";
@@ -420,8 +471,10 @@ function getFavoriteGenre($session_id) {
 
 function getRecommendations($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $genre = getFavoriteGenre($session_id)['genre'];
     $param = '%'.$genre.'%';
@@ -449,8 +502,10 @@ function getRecommendations($session_id) {
 
 function addToWatchlist($session_id, $tmdb_id, $image) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $query = "INSERT INTO Watchlist (movie_id, image, user) 
               VALUES (:movie_id, :image, :user)";
@@ -470,8 +525,10 @@ function addToWatchlist($session_id, $tmdb_id, $image) {
 
 function removeFromWatchList($session_id, $image) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $query = "DELETE FROM Watchlist 
               WHERE user = :user AND image = :image";
@@ -490,8 +547,10 @@ function removeFromWatchList($session_id, $image) {
 
 function getWatchlist($session_id) {
   try{
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
     $movie = "SELECT * FROM Watchlist WHERE user = :user";
     $stmt = $pdo-> prepare($movie);
@@ -514,8 +573,10 @@ function getWatchlist($session_id) {
 
 function populateDatabase($data) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
       $query = "INSERT INTO Movies (tmdb_id, title, description, image, releaseDate, vote_average, genre_ids) 
                 VALUES (:tmdb_id, :title, :description, :image, :release_date, :vote_average, :genre_ids)";
@@ -596,8 +657,10 @@ function getGenreNameById($genreId) {
 
 function createForum($title, $description, $session_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $query = "INSERT INTO Forums (title, description, user) 
               VALUES (:title, :description, :user)";
@@ -620,8 +683,11 @@ function createForum($title, $description, $session_id) {
 
 function getForums() {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+
     $query = "SELECT * FROM Forums";
     $stmt = $pdo->prepare($query);
     $r = $stmt->execute([]);
@@ -643,8 +709,11 @@ function getForums() {
 
 function getForumPost($id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+
     $query = "SELECT * FROM Forums WHERE id = :id";
     $stmt = $pdo->prepare($query);
     $r = $stmt->execute([
@@ -669,8 +738,10 @@ function getForumPost($id) {
 
 function createForumComment($comment, $forum_id, $session_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
     
     $query = "INSERT INTO Forum_Comments (forum_id, comment, user) 
               VALUES (:forum_id, :comment, :user)";
@@ -693,8 +764,11 @@ function createForumComment($comment, $forum_id, $session_id) {
 
 function getForumComments($forum_id) {
   try {
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
+    
     $query = "SELECT * FROM Forum_Comments WHERE forum_id = :forum_id";
     $stmt = $pdo->prepare($query);
     $r = $stmt->execute([
@@ -729,8 +803,10 @@ function generate2fa($session_id)
 {
     try {
         // Load database connection
-        $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo = getPDO(); // Use the centralized PDO function
+    if (!$pdo) {
+        return "failure"; // If connection fails
+    }
 
         // Step 1: Get user_id from Sessions table
         $stmt = $pdo->prepare("SELECT user_id FROM Sessions WHERE session_id = :session_id");

@@ -9,7 +9,7 @@ $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 
-$account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
+$account_sid = $_ENV['TWILIO_ACCOUNT_SID']; //uses .env file to grab credentials
 $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
 $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
 

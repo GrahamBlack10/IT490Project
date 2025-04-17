@@ -720,20 +720,20 @@ function getForumComments($forum_id) {
 
 use Twilio\Rest\Client;
 
-function generate2fa($data)
+function generate2fa($session_id)
 {
     try {
         // Connect to database
         $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $userId = $data['user_id'];
+        $userId = $session_id['user_id'];
 
         // Step 1: Look up user's phone number
-        $Query = "SELECT phone FROM Users WHERE id = :id";
+        $Query = "SELECT phone FROM Users WHERE session_id = :sessionid";
         $stmt = $pdo->prepare($Query);
-        $stmt->execute(['id' => $userId]);
-        $phone = $stmt->fetchColumn();
+        $stmt->execute(['session_id' => $userId]);
+        $phone = $stmt->FETCH_ASSOC();
 
         if (!$phone) {
             echo "User not found. Skipping.\n";
@@ -754,12 +754,12 @@ function generate2fa($data)
         ]);
 
         // Step 4: Send SMS via Twilio
-        $sid = 'ACdec7955e135ff069772771818cf31056';
-        $token = 'ab77dcb8935afc33b9d42440d99f0c84';
-        $twilio_number = '+19369781911';
-        $client = new Client($sid, $token);
+        $account_sid = $_ENV['TWILIO_ACCOUNT_SID']; //uses .env file to grab credentials
+        $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
+        $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
+        $twilio = new Client($account_sid, $auth_token);
 
-        $client->messages->create($phone, [
+        $twilio->messages->create($phone, [
             'from' => $twilio_number,
             'body' => "Your 2FA code is: $code"
         ]);

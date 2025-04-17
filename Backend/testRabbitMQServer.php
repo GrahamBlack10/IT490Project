@@ -724,65 +724,64 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
+
 function generate2fa($session_id)
 {
     try {
-        // Connect to database
+        // Load database connection
         $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $userId = $session_id['user_id'];
+        // Step 1: Get user_id from Sessions table
+        $stmt = $pdo->prepare("SELECT user_id FROM Sessions WHERE session_id = :session_id");
+        $stmt->execute(['session_id' => $session_id]);
+        $userId = $stmt->fetchColumn();
 
-        // Step 1: Look up user's phone number
-        $Query = "SELECT phone FROM Users WHERE session_id = :sessionid";
-        $stmt = $pdo->prepare($Query);
-        $stmt->execute(['session_id' => $userId]);
-        $phone = $stmt->FETCH_ASSOC();
-
-        if (!$phone) {
-            echo "User not found. Skipping.\n";
-            return ['status' => 'error', 'message' => 'User not found'];
+        if (!$userId) {
+            return ['status' => 'error', 'message' => 'Session not found'];
         }
 
-        // Step 2: Generate random 6-digit code
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 minutes from now
+        // Step 2: Get phone number from Users table
+        $stmt = $pdo->prepare("SELECT number FROM Users WHERE id = :id");
+        $stmt->execute(['id' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Step 3: Store the code in the TwoFactorCodes table
-        $insertQuery = "INSERT INTO TwoFactorCodes (user_id, code, expires_at) VALUES (:user_id, :code, :expires_at)";
-        $stmt = $pdo->prepare($insertQuery);
+        if (!$row || !isset($row['number'])) {
+            return ['status' => 'error', 'message' => 'Phone number not found'];
+        }
+
+        $phone = $row['number'];
+
+        // Step 3: Generate a 6-digit code and store it (for backup or fallback)
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = date('Y-m-d H:i:s', time() + 300);
+
+        $stmt = $pdo->prepare("INSERT INTO Users (id, code, 2fa) VALUES (:id :code, :2fa)");
         $stmt->execute([
-            'user_id' => $userId,
+            'id' => $userId,
             'code' => $code,
-            'expires_at' => $expiresAt
+            '2fa' => $TwoFA
         ]);
 
-        // Step 4: Send SMS via Twilio
-        $account_sid = $_ENV['TWILIO_ACCOUNT_SID']; //uses .env file to grab credentials
+        // Step 4: Send the code using Twilio Verify API
+        $account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
         $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
         $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
-        $twilio = new Client($account_sid, $auth_token, $verify_sid);
+        $twilio = new Client($account_sid, $auth_token);
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-          if (isset($_POST['phone'])) {
-              $_SESSION['phone'] = $_POST['phone'];
-      
-              try {
-                  $verification = $twilio->verify->v2->services($verify_sid)
-                      ->verifications
-                      ->create($_SESSION['phone'], "sms");
-      
-                  echo "<p>Verification code sent to {$_SESSION['phone']}</p>";
-                } catch (Exception $e) {
-                echo "<p style='color:red;'>Error sending verification: " . $e->getMessage() . "</p>";
-                  session_destroy();
-                  exit;
-              }
+        $verification = $twilio->verify->v2->services($verify_sid)
+            ->verifications
+            ->create($phone, "sms");
 
-            }
-          }
-        }
-      }
+        return ['status' => 'success', 'message' => "2FA code sent to $phone"];
+
+    } catch (PDOException $e) {
+        return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+    } catch (Exception $e) {
+        return ['status' => 'error', 'message' => 'Twilio error: ' . $e->getMessage()];
+    }
+}
+
   
 
        
@@ -848,7 +847,7 @@ function requestProcessor($request)
     case "get_forum_comments":
       return getForumComments($request['forum_id']);
     case "generate_2fa":
-      return generate2fa($request);
+      return generate2fa($request['session_id']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

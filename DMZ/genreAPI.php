@@ -26,7 +26,7 @@ function rabbitConnect($request) {
 function getGenresFromTMDB($api_key) {
 
     $response = rabbitConnect($request);
-    
+
     $url = "https://api.themoviedb.org/3/genre/movie/list?api_key={$api_key}&language=en-US";
     
     $ch = curl_init();
@@ -122,6 +122,23 @@ if ($err) {
     } else {
         echo "No upcoming movies found in API response.\n";
     }
+    
+}
+
+if ($fp = @fsockopen("192.168.196.26" , 5672)) {
+    echo "192.168.196.86 is reachable!";
+}
+
+else {
+    echo "Cannot reach 192.168.196.26...\n";
+}
+
+if ($fp = @fsockopen("192.168.196.138" , 5672)) {
+    echo "192.168.196.229 is reachable!";
+}
+
+else {
+    echo "Cannot reach 192.168.196.138...\n";
 }
 
 ?>

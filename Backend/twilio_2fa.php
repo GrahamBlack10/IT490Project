@@ -3,15 +3,18 @@ session_start();
 
 require_once 'vendor/autoload.php';
 use Twilio\Rest\Client;
+use Dotenv\Dotenv;
 
-// Twilio credentials
-$account_sid = 'ACc41c1f3bdb4a9fc30faf1685a35eb2df';
-$auth_token = 'd4de1eca6da6b14506ffdcd56ccbef67';
-$verify_sid = 'VA1a84fbe2d1c155e95f1608a2107a2b16'; 
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+
+$account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
+$auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
+$verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
 
 $twilio = new Client($account_sid, $auth_token);
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['phone'])) {
         $_SESSION['phone'] = $_POST['phone'];

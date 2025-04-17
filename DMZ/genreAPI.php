@@ -6,8 +6,27 @@ require_once(__DIR__ . '/rabbitmq/rabbitMQLib.inc');
 
 $api_key = "86a1bb882411e830da6e1187379aa81d";
 
+function rabbitConnect($request) {
+	$fp = @fsockopen("192.168.196.26" , 5672);
+
+	if ($fp) {
+		$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+		$response = $client->send_request($request);
+		return $response;
+	}
+
+	else {
+		$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/spareRabbitMQ.ini", "testServer");
+		$response = $client->send_request($request);
+		return $response;
+	}
+}
+
 // Function to fetch genres from TMDB and return an associative array [id => name]
 function getGenresFromTMDB($api_key) {
+
+    $response = rabbitConnect($request);
+    
     $url = "https://api.themoviedb.org/3/genre/movie/list?api_key={$api_key}&language=en-US";
     
     $ch = curl_init();

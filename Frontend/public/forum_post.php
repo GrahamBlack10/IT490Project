@@ -15,8 +15,7 @@ $id = (int)$_GET['id'];
 $request = array();
 $request["type"] = "get_forum_post";
 $request["id"] = $id;
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 
 $title = $response['title'];
 $user = $response['user'];
@@ -69,8 +68,7 @@ $description = $response['description'];
         $request['forum_id'] = $id;
         $request['session_id'] = session_id();
 
-        $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-        $response = $client->send_request($request);
+        $response = rabbitConnect($request);
         header('Location: forum_post.php?id=' . $id);
         exit;
     }
@@ -78,8 +76,7 @@ $description = $response['description'];
     $request = array();
     $request['type'] = 'get_forum_comments';
     $request['forum_id'] = $id; 
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-    $comments = $client->send_request($request);
+    $comments = rabbitConnect($request);
     ?>
 
    

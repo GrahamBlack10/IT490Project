@@ -12,14 +12,12 @@ session_start();
 $request = array();
 $request['type'] = 'get_email';
 $request['session_id'] = session_id();
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 $email = $response;
 
 $request = array();
 $request['type'] = 'get_latest_movie';
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 $movie = $response;
 
 $mail = new PHPMailer(true); // Enable exceptions

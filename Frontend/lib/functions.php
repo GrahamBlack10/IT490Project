@@ -39,11 +39,7 @@ function getMovies() {
     
     $request = array();
     $request['type'] = 'get_movies';
-
-    
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-
-    $response = $client->send_request($request);
+    $response = rabbitConnect($request);
     return $response;
 }
 
@@ -52,10 +48,7 @@ function getMoviesWithFilter($filter) {
 	$request = array();
 	$request['type'] = 'get_movies_with_filter';
 	$request['filter'] = $filter;
-
-	$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-
-    $response = $client->send_request($request);
+	$response = rabbitConnect($request);
     return $response;
 }
 

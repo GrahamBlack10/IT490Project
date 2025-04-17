@@ -21,9 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->verifications
                 ->create($_SESSION['phone'], "sms");
 
-            echo "<p>✅ Verification code sent to {$_SESSION['phone']}</p>";
+            echo "<p>Verification code sent to {$_SESSION['phone']}</p>";
         } catch (Exception $e) {
-            echo "<p style='color:red;'>❌ Error sending verification: " . $e->getMessage() . "</p>";
+            echo "<p style='color:red;'>Error sending verification: " . $e->getMessage() . "</p>";
             session_destroy();
             exit;
         }

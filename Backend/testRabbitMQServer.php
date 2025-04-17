@@ -719,6 +719,10 @@ function getForumComments($forum_id) {
 
 
 use Twilio\Rest\Client;
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 function generate2fa($session_id)
 {
@@ -757,24 +761,32 @@ function generate2fa($session_id)
         $account_sid = $_ENV['TWILIO_ACCOUNT_SID']; //uses .env file to grab credentials
         $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
         $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
-        $twilio = new Client($account_sid, $auth_token);
+        $twilio = new Client($account_sid, $auth_token, $verify_sid);
 
-        $twilio->messages->create($phone, [
-            'from' => $twilio_number,
-            'body' => "Your 2FA code is: $code"
-        ]);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+          if (isset($_POST['phone'])) {
+              $_SESSION['phone'] = $_POST['phone'];
+      
+              try {
+                  $verification = $twilio->verify->v2->services($verify_sid)
+                      ->verifications
+                      ->create($_SESSION['phone'], "sms");
+      
+                  echo "<p>Verification code sent to {$_SESSION['phone']}</p>";
+                } catch (Exception $e) {
+                echo "<p style='color:red;'>Error sending verification: " . $e->getMessage() . "</p>";
+                  session_destroy();
+                  exit;
+              }
 
-        echo "2FA code sent to user ID $userId ($phone).\n";
-        return ['status' => 'success', 'message' => '2FA code sent'];
+            }
+          }
+        }
+      }
+  
 
-    } catch (PDOException $e) {
-        echo "Database error: " . $e->getMessage() . PHP_EOL;
-        return ['status' => 'error', 'message' => 'Database error'];
-    } catch (Exception $e) {
-        echo "SMS send error: " . $e->getMessage() . PHP_EOL;
-        return ['status' => 'error', 'message' => 'SMS send failed'];
-    }
-}
+       
+  
 
 
 function requestProcessor($request)

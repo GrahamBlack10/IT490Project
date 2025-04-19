@@ -721,55 +721,43 @@ function getForumComments($forum_id) {
 use Twilio\Rest\Client;
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__);
+
+$dotenv = Dotenv::createImmutable(__DIR__); //Loads info from env file
 $dotenv->load();
 
 
-function generate2fa($session_id)
+function generate2fa($userId, $phone)
 {
     try {
-        // Load database connection
         $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Step 1: Get user_id from Sessions table
-        $stmt = $pdo->prepare("SELECT user_id FROM Sessions WHERE session_id = :session_id");
-        $stmt->execute(['session_id' => $session_id]);
-        $userId = $stmt->fetchColumn();
-
-        if (!$userId) {
-            return ['status' => 'error', 'message' => 'Session not found'];
-        }
-
-        // Step 2: Get phone number from Users table
-        $stmt = $pdo->prepare("SELECT number FROM Users WHERE id = :id");
+        // Step 1: Look up user by ID and compare phone number
+        $stmt = $pdo->prepare("SELECT phone FROM Users WHERE id = :id");
         $stmt->execute(['id' => $userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$row || !isset($row['number'])) {
-            return ['status' => 'error', 'message' => 'Phone number not found'];
+        if (!$row || $row['phone'] !== $phone) {
+            return ['status' => 'error', 'message' => 'Phone number does not match user ID'];
         }
 
-        $phone = $row['number'];
-
-        // Step 3: Generate a 6-digit code and store it (for backup or fallback)
+        // Step 2: Generate code
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $expiresAt = date('Y-m-d H:i:s', time() + 300);
 
-        $stmt = $pdo->prepare("INSERT INTO Users (id, code, 2fa) VALUES (:id :code, :2fa)");
+        // Step 3: Save the code and enable 2FA
+        $stmt = $pdo->prepare("UPDATE Users SET code = :code, `2fa` = 1 WHERE id = :id");
         $stmt->execute([
-            'id' => $userId,
             'code' => $code,
-            '2fa' => $TwoFA
+            'id' => $userId
         ]);
 
-        // Step 4: Send the code using Twilio Verify API
+        // Step 4: Send SMS via Twilio
         $account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
         $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
         $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
         $twilio = new Client($account_sid, $auth_token);
 
-        $verification = $twilio->verify->v2->services($verify_sid)
+        $twilio->verify->v2->services($verify_sid)
             ->verifications
             ->create($phone, "sms");
 
@@ -781,6 +769,8 @@ function generate2fa($session_id)
         return ['status' => 'error', 'message' => 'Twilio error: ' . $e->getMessage()];
     }
 }
+
+
 
   
 
@@ -847,7 +837,7 @@ function requestProcessor($request)
     case "get_forum_comments":
       return getForumComments($request['forum_id']);
     case "generate_2fa":
-      return generate2fa($request['session_id']);
+      return generate2fa($request['user_id'], $request['phone']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

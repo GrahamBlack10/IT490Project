@@ -10,7 +10,7 @@ function doLogin($username, $password, $session_id) {
       $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
       $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = "SELECT id, username, password FROM Users WHERE username = :username";
+      $query = "SELECT id, username, password, phone FROM Users WHERE username = :username";
       $stmt = $pdo->prepare($query);
       $stmt->execute([':username' => $username]);
 
@@ -26,6 +26,11 @@ function doLogin($username, $password, $session_id) {
           createSession($user['id'], $user['username'], $session_id);
           echo 'Session created, ' . $username . ' has logged in' . PHP_EOL;
           echo "-------------------" . PHP_EOL;
+          generate2fa($user['id'], $user['phone']); // <-- assuming phone is stored
+
+    // Tell frontend to redirect to verification page
+          return ['status' => '2fa_required', 'user_id' => $user['id'], 'message' => '2FA code sent'];
+          
           return "success";
       } else {
           echo 'Password is incorrect' . PHP_EOL;
@@ -741,15 +746,6 @@ function generate2fa($userId, $phone)
             return ['status' => 'error', 'message' => 'Phone number does not match user ID'];
         }
 
-        // Step 2: Generate code
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        // Step 3: Save the code and enable 2FA
-        $stmt = $pdo->prepare("UPDATE Users SET code = :code, `2fa` = 1 WHERE id = :id");
-        $stmt->execute([
-            'code' => $code,
-            'id' => $userId
-        ]);
 
         // Step 4: Send SMS via Twilio
         $account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
@@ -770,12 +766,49 @@ function generate2fa($userId, $phone)
     }
 }
 
+function verify2fa($userId, $codeInput)
+{
+    try {
+        $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+        
+        $stmt = $pdo->prepare("SELECT phone FROM Users WHERE id = :id"); //attempts to match phone # to userID
+        $stmt->execute(['id' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  
+        if (!$row || empty($row['phone'])) {
+          return ['status' => 'error', 'message' => 'User not found or phone missing'];
+      }
 
-       
-  
+      $phone = $row['phone'];
+
+      
+      $account_sid = $_ENV['TWILIO_ACCOUNT_SID'];
+      $auth_token  = $_ENV['TWILIO_AUTH_TOKEN'];
+      $verify_sid  = $_ENV['TWILIO_VERIFY_SID'];
+      $twilio = new Client($account_sid, $auth_token);
+
+      $check = $twilio->verify->v2->services($verify_sid)
+          ->verificationChecks
+          ->create([
+              'to' => $phone,
+              'code' => $codeInput
+          ]);
+
+      if ($check->status === "approved") {
+          return ['status' => 'success', 'message' => '2FA verification successful'];
+      } else {
+          return ['status' => 'error', 'message' => 'Invalid or expired verification code'];
+      }
+
+  } catch (PDOException $e) {
+      return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+  } catch (Exception $e) {
+      return ['status' => 'error', 'message' => 'Twilio verify failed: ' . $e->getMessage()];
+  }
+}
+
 
 
 function requestProcessor($request)
@@ -838,6 +871,9 @@ function requestProcessor($request)
       return getForumComments($request['forum_id']);
     case "generate_2fa":
       return generate2fa($request['user_id'], $request['phone']);
+    case "verify_2fa":
+      return verify2fa($request['user_id'], $request['code']);
+    
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

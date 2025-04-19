@@ -38,15 +38,29 @@ if (is_logged_in()) {
         $request['session_id'] = session_id();
         $response = rabbitConnect($request);
         
-        if ($response === 'success') {
-            die(header("Location: profile.php"));
+        if (is_array($response)) {
+            if ($response['status'] === '2fa_required') {
+                // Store user_id in session for verify page if needed
+                $_SESSION['user_id'] = $response['user_id'];
+                header("Location: verify_code.php?user_id=" . $response['user_id']);
+                exit;
+            }
+            elseif ($response['status'] === 'success') {
+                header("Location: profile.php");
+                exit;
+            }
+            else {
+                echo "<p class='text-danger'>" . htmlspecialchars($response['message']) . "</p>";
+            }
+        } else {
+            // Handle old string-based response fallback
+            if ($response === 'success') {
+                header("Location: profile.php");
+                exit;
+            } else {
+                echo "<p class='text-danger'>Login failed: " . htmlspecialchars($response) . "</p>";
+            }
         }
-
-        else {
-            echo $response . 'Login failed, please try again';
-        }
-
-        
     }
 
     if ($fp = @fsockopen("192.168.196.86" , 5672)) {

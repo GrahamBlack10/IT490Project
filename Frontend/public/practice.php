@@ -11,25 +11,24 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 
 
 
-$responseMessage = "";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['user_id']) && isset($_POST['phone'])) {
-        $user_id = $_POST['user_id'];
-        $phone = $_POST['phone'];
+//if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //if (isset($_POST['user_id']) && isset($_POST['phone'])) {
+        //$user_id = $_POST['user_id'];
+        //$phone = $_POST['phone'];
 
-        $client = new RabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+        //$client = new RabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 
-        $request = [
-            'type' => 'generate_2fa',
-            'user_id' => $user_id,
-            'phone' => $phone
-        ];
+        //$request = [
+           // 'type' => 'generate_2fa',
+           // 'user_id' => $user_id,
+           // 'phone' => $phone
+     //   ];
 
-        $response = $client->send_request($request);
-        $responseMessage = $response['message'] ?? 'No response received.';
-    }
-}
+      //  $response = $client->send_request($request);
+      //  $responseMessage = $response['message'] ?? 'No response received.';
+ //   }
+// }
 ?>
 
 <h2>Two-Factor Authentication</h2>

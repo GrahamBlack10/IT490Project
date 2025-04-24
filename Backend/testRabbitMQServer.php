@@ -43,26 +43,30 @@ function doLogin($username, $password, $session_id) {
   }
 }
 
-function doRegistration($user, $password, $email) {
+function doRegistration($user, $password, $email, $phoneNum) {
   try {
-      $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
-      $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO("mysql:host=127.0.0.1;dbname=testdb;charset=utf8mb4", "testUser", "12345");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = "INSERT INTO Users (username, password, email) VALUES (:username, :password, :email)";
+      $query = "INSERT INTO Users
+                (username, password, email, phone)
+                VALUES (:username, :password, :email, :phone)";
       $stmt = $pdo->prepare($query);
       $stmt->execute([
           ':username' => $user,
-          ':password' => $password, 
-          ':email' => $email
+          ':password' => $password,
+          ':email'    => $email,
+          ':phone'    => $phoneNum    
       ]);
 
       echo "$user registered successfully." . PHP_EOL;
-      return "success";
+      return ['status'=>'success'];
   } catch (PDOException $e) {
       echo "registration failed: " . $e->getMessage() . PHP_EOL;
-      return "failure";
+      return ['status'=>'error','message'=>$e->getMessage()];
   }
 }
+
 
 function createSession($id, $user, $session_id) {
   try {
@@ -766,6 +770,7 @@ function generate2fa($userId, $phone)
     }
 }
 
+
 function verify2fa($userId, $codeInput)
 {
     try {
@@ -811,6 +816,7 @@ function verify2fa($userId, $codeInput)
 
 
 
+
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -824,7 +830,7 @@ function requestProcessor($request)
     case "login":
       return doLogin($request['user'],$request['password'],$request['session_id']);
     case "registration":
-      return doRegistration($request['user'],$request['password'],$request['email']);
+      return doRegistration($request['user'],$request['password'],$request['email'], $request['phone'] );
     case "validate_session":
       return verifySession($request['session_id']);
     case "populate_database":

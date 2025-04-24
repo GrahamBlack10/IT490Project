@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user_id = $_POST['user_id'];
         $code = $_POST['code'];
 
-        $client = new RabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
 
         $request = [
             'type' => 'verify_2fa',
@@ -20,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'code' => $code
         ];
 
-        $response = $client->send_request($request);
+        $response = rabbitConnect($request);
         $responseMessage = $response['message'];
         
         if ($response['status'] === 'success') {

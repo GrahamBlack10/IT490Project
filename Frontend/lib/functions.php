@@ -5,10 +5,14 @@ require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 
 function rabbitConnect($request) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	$fp = @fsockopen("192.168.196.26" , 5672);
 =======
 	$fp = @fsockopen("192.168.196.37" , 5672);
 >>>>>>> 241c7811c418b11dd5b53ec8858e67edfe8841f5
+=======
+	$fp = @fsockopen("192.168.196.26" , 5672);
+>>>>>>> f64603bf30eeb88ff9ba4bc5622f14a30de2e458
 
 	if ($fp) {
 		$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");

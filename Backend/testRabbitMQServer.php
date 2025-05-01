@@ -3,6 +3,7 @@
 require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
+require_once('rabbitFanoutConnect.php');
 require_once ('vendor/autoload.php'); //Twilio 
 
 function doLogin($username, $password, $session_id) {
@@ -815,8 +816,6 @@ function verify2fa($userId, $codeInput)
 }
 
 
-
-
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
@@ -832,7 +831,10 @@ function requestProcessor($request)
     case "registration":
       return doRegistration($request['user'],$request['password'],$request['email'], $request['phone'] );
     case "validate_session":
-      return verifySession($request['session_id']);
+      $function = verifySession($request['session_id']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "populate_database":
       return populateDatabase($request['data']);
     case "get_movies":
@@ -882,6 +884,29 @@ function requestProcessor($request)
     
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
+}
+
+function logToFile($message) {
+  $logFile = 'logging/primary.log';
+  $timestamp = date('Y-m-d H:i:s');
+  file_put_contents($logFile, "[$timestamp] $message" . PHP_EOL, FILE_APPEND);
+  distributeLogs($message, $timestamp);
+}
+
+function distributeLogs($message, $timestamp) {
+  $logRequest = array();
+  $logRequest['type'] = 'logging';
+  $logRequest['message'] = $message;
+  $logRequest['source'] = 'backend';
+  $logRequest['timestamp'] = $timestamp;
+  rabbitFanoutConnect($logRequest);
+}
+
+function responseLog($message){
+try {
+  logToFile("Response: " . $message);
+} catch (Exception $e){ 
+  echo "No message or unknown error".PHP_EOL;}
 }
 
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer");

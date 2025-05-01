@@ -10,13 +10,13 @@ function rabbitConnect($request) {
 	$fp = @fsockopen("192.168.196.26" , 5672);
 
 	if ($fp) {
-		$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
+		$client = new rabbitMQClient(__DIR__ . "/rabbitmq/testRabbitMQ.ini", "testServer");
 		$response = $client->send_request($request);
 		return $response;
 	}
 
 	else {
-		$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/spareRabbitMQ.ini", "testServer");
+		$client = new rabbitMQClient(__DIR__ . "/rabbitmq/spareRabbitMQ.ini", "testServer");
 		$response = $client->send_request($request);
 		return $response;
 	}
@@ -24,9 +24,7 @@ function rabbitConnect($request) {
 
 // Function to fetch genres from TMDB and return an associative array [id => name]
 function getGenresFromTMDB($api_key) {
-
-    $response = rabbitConnect($request);
-
+    
     $url = "https://api.themoviedb.org/3/genre/movie/list?api_key={$api_key}&language=en-US";
     
     $ch = curl_init();
@@ -101,13 +99,8 @@ if ($err) {
             "data" => $data
         ];
 
-        $client = new rabbitMQClient(__DIR__ . "/rabbitmq/testRabbitMQ.ini", "testServer");
-        $rabbitResponse = $client->send_request($request);
-
-        // Display RabbitMQ response
-        echo "RabbitMQ Response:\n";
-        print_r($rabbitResponse);
-        echo "\n";
+        
+        $response = rabbitConnect($request);
 
         // Print formatted output for CLI
         echo "Upcoming Movies (TMDb):\n";

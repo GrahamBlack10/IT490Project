@@ -827,28 +827,55 @@ function requestProcessor($request)
   switch ($request['type'])
   {
     case "login":
-      return doLogin($request['user'],$request['password'],$request['session_id']);
+      $function = doLogin($request['user'],$request['password'],$request['session_id']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "registration":
-      return doRegistration($request['user'],$request['password'],$request['email'], $request['phone'] );
+      $function = doRegistration($request['user'],$request['password'],$request['email'], $request['phone'] );
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "validate_session":
       $function = verifySession($request['session_id']);
       $message = $request['type'] . ": " . $function;
       responseLog($message);
       return $function;
     case "populate_database":
-      return populateDatabase($request['data']);
+      $function = populateDatabase($request['data']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_movies":
-      return getMovies();
+      $function = getMovies();
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_movies_with_filter":
-      return getMoviesWithFilter($request['filter']);
+      $function = getMoviesWithFilter($request['filter']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_latest_movie":
-      return getLatestMovie();
+      $function = getLatestMovie();
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_movie_details":
-      return getMovieDetails($request['movie_id']);
+      $function = getMovieDetails($request['movie_id']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "create_movie_review":
-      return createMovieReview($request['session_id'], $request['movie_id'], $request['rating'], $request['review']);
+      $function = createMovieReview($request['session_id'], $request['movie_id'], $request['rating'], $request['review']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_movie_reviews":
-      return getMovieReviews($request['movie_id']);
+      $function = getMovieReviews($request['movie_id']);
+      $message = $request['type'] . ": " . $function;
+      responseLog($message);
+      return $function;
     case "get_average_rating":
       return getAverageRating($request['movie_id']);
     case "update_favorite_genre":
@@ -878,9 +905,15 @@ function requestProcessor($request)
     case "get_forum_comments":
       return getForumComments($request['forum_id']);
     case "generate_2fa":
-      return generate2fa($request['user_id'], $request['phone']);
+      $function = generate2fa($request['user_id'], $request['phone']);
+      $message = $request['type'] . ": " . $function['message'];
+      responseLog($message);
+      return $function;
     case "verify_2fa":
-      return verify2fa($request['user_id'], $request['code']);
+      $function = verify2fa($request['user_id'], $request['code']);
+      $message = $request['type'] . ": " . $function['message'];
+      responseLog($message);
+      return $function;
     
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");

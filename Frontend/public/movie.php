@@ -15,8 +15,7 @@ $tmdb_id = (int)$_GET['tmdb_id'];
 $request = array();
 $request["type"] = "get_movie_details";
 $request["movie_id"] = $tmdb_id;
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response= $client->send_request($request);
+$response = rabbitConnect($request);
 
 $title       = $response['title']; 
 $releaseDate = $response['releaseDate'];
@@ -26,8 +25,7 @@ $image       = $response['image'];
 $request = array();
 $request['type'] = 'get_average_rating';
 $request['movie_id'] = $tmdb_id;
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 $averageRating = $response['average_rating']; 
 
 
@@ -38,8 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review'], $_POST['rat
     $request['session_id'] = session_id();
     $request['review']     = $_POST['review'];
     $request['rating']     = $_POST['rating']; 
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-    $response = $client->send_request($request);
+    $response = rabbitConnect($request);
     header('Location: movie.php?tmdb_id=' . $tmdb_id);
     exit;
 }
@@ -50,8 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['watchlist'])) {
     $request['session_id'] = session_id();
     $request['image'] = $image;
     $request['tmdb_id'] = $tmdb_id;
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-    $response = $client->send_request($request);
+    $response = rabbitConnect($request);
     header('Location: movie.php?tmdb_id=' . $tmdb_id);
     exit;
 }
@@ -59,8 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['watchlist'])) {
 $request = array();
 $request['type']     = 'get_movie_reviews';
 $request['movie_id'] = $tmdb_id;
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$reviews = $client->send_request($request);
+$reviews = rabbitConnect($request);
 ?>
 
 <div class="container py-5">

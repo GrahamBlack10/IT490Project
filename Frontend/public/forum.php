@@ -47,8 +47,7 @@ if (!is_logged_in()) {
         $request['title'] = $title;
         $request['description'] = $description;
         $request['session_id'] = session_id();
-        $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-        $response = $client->send_request($request);
+        $response = rabbitConnect($request);
     
         if ($response === 'success') {
             echo '<div class="alert alert-success text-center" role="alert">Post created!</div>';
@@ -58,8 +57,7 @@ if (!is_logged_in()) {
    
     $request = array();
     $request['type'] = 'get_forums';
-    $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-    $forums = $client->send_request($request);
+    $forums = rabbitConnect($request);
     ?>
 
     

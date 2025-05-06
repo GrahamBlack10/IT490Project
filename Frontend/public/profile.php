@@ -12,8 +12,7 @@ if (!is_logged_in()) {
 $request = array();
 $request['type'] = 'get_favorite_genre';
 $request['session_id'] = session_id();
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 if ($response === 'No genre found') {
     $output = 'No genre selected!';
 } else {
@@ -26,8 +25,7 @@ if (isset($_POST["genre"])) {
   $request["type"] = "update_favorite_genre";
   $request["genre"] = $_POST["genre"];
   $request["session_id"] = session_id();
-  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-  $response = $client->send_request($request);
+  $response = rabbitConnect($request);
   header('Location: profile.php');
   exit;
 }
@@ -37,8 +35,7 @@ if (isset($_POST["remove"])) {
   $request["type"] = "remove_from_watchlist";
   $request["session_id"] = session_id();
   $request["image"] = $_POST["image"];
-  $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-  $response = $client->send_request($request);
+  $response = rabbitConnect($request);
   header('Location: profile.php');
   exit;
 }
@@ -46,8 +43,7 @@ if (isset($_POST["remove"])) {
 $request = array();
 $request['type'] = 'get_watchlist';
 $request['session_id'] = session_id();
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$watchlist = $client->send_request($request);
+$watchlist = rabbitConnect($request);
 ?>
 
 <div class="container py-5">

@@ -1,85 +1,102 @@
-<?php 
+<?php
+session_start();
 include __DIR__ . "/../partials/header.php";
-include __DIR__ . "/../partials/nav.php"; 
-include __DIR__ . "/../lib/functions.php";
+include __DIR__ . "/../partials/nav.php";
+require_once(__DIR__ . "/../lib/functions.php");
 require_once(__DIR__ . '/../rabbitmq/path.inc');
 require_once(__DIR__ . '/../rabbitmq/get_host_info.inc');
 require_once(__DIR__ . '/../rabbitmq/rabbitMQLib.inc');
 
 if (is_logged_in()) {
-    die(header("Location: profile.php"));
+    header("Location: profile.php");
+    exit();
+}
+
+$error = "";
+$success = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user     = trim($_POST['user']);
+    $email    = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm  = $_POST['confirm'];
+    $phone    = trim($_POST['phone']);
+
+    // basic validation
+    if ($password !== $confirm) {
+        $error = "Passwords must match.";
+    } elseif (!preg_match('/^\+?\d{7,15}$/', $phone)) {
+        $error = "Please enter a valid phone number.";
+    }
+
+    if (!$error) {
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $request = [
+            'type'     => 'registration',
+            'user'     => $user,
+            'password' => $hash,
+            'email'    => $email,
+            'phone'    => $phone     
+        ];
+
+        try {
+            $response = rabbitConnect($request);
+            if (is_array($response) && ($response['status'] ?? '') === 'success') {
+                $success = "Registration successful! You can now log in.";
+            } else {
+                $error = $response['message'] ?? "Registration failed.";
+            }
+        } catch (Exception $e) {
+            $error = "Error: " . $e->getMessage();
+        }
+    }
 }
 ?>
 
-<form action="register.php" method="POST">
-    <div class="form-group">
-        <div class="col-md-4">
-            <label for="user">Register </label>
-            <input type="text" name="user" class="form-control" id="user" placeholder="Enter Username">
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Register</h4>
         </div>
-    </div>
-    <div class="form-group">
-        <div class="col-md-4">
-            <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email">
-        </div>
-    </div>
-    <div class="form-group">
-        <div class="col-md-4">
-            <input type="password" name="password" class="form-control" id="password" placeholder="Password">
-        </div>
-    </div>
-    <div class="form-group">
-        <div class="col-md-4">
-            <input type="password" name="confirm" class="form-control" id="confirm" placeholder="Confirm Password">
-        </div>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</form>
+        <div class="card-body">
+          <?php if ($error): ?>
+            <div class="alert alert-danger"><?= $error ?></div>
+          <?php elseif ($success): ?>
+            <div class="alert alert-success"><?= $success ?></div>
+          <?php endif; ?>
 
-<?php 
-    if (isset($_POST["password"]) && isset($_POST["confirm"]) && isset($_POST["user"]) && isset($_POST["email"])) {
-        $password = $_POST["password"];
-        $confirm = $_POST["confirm"];
-        $user = $_POST["user"];
-        $email = $_POST["email"];
-        $hasErrors = false;
-
-        if($password !== $confirm) {
-            echo "<script type='text/javascript'>alert('Passwords need to match');</script>";
-            $hasErrors = true;
-        }
-    
-        if(!$hasErrors) {
-            $hash = password_hash($password, PASSWORD_BCRYPT);
-            try {
-                $request = array();
-                $request['type'] = 'registration';
-                $request['user'] = $user;
-                $request['password'] = $hash;
-                $request['email'] = $email;
-                $client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-                $response = $client->send_request($request);
-                print_r($response);
-                if($response === 'success') {
-                    "<script type='text/javascript'>alert('Resgistration successful!');</script>";
-                }
-
-                else {
-                    "<script type='text/javascript'>alert('Resgistration failed...');</script>";
-                }
-                //if(isset($response['type']) && $response['type'] === 'registration_response') {
-                //    if($response['registration_status'] === 'success') {
-                //        echo "<script type='text/javascript'>alert('Registration Success!');</script>";
-                //    } else {
-                //        echo "<script type='text/javascript'>alert('Fuck you');</script>";
-                //    } 
-                //}
-            }
-            catch (Exception $e) {
-                echo $e;
-            }        
-        }
-    }
-?>
+          <form method="POST" action="register.php">
+            <div class="mb-3">
+              <label for="user" class="form-label">Username</label>
+              <input type="text" class="form-control" id="user" name="user" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" id="phone" name="phone"
+                     placeholder="+1234567890" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password"
+                     name="password" required>
+            </div>
+            <div class="mb-3">
+              <label for="confirm" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="confirm"
+                     name="confirm" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <?php include __DIR__ . "/../partials/footer.php"; ?>

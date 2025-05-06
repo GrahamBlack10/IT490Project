@@ -15,8 +15,7 @@ if (!is_logged_in()) {
 $request = array();
 $request['type'] = 'get_recommendations';
 $request['session_id'] = session_id();
-$client = new rabbitMQClient(__DIR__ . "/../rabbitmq/testRabbitMQ.ini", "testServer");
-$response = $client->send_request($request);
+$response = rabbitConnect($request);
 ?>
 
 <div class="container py-5">
